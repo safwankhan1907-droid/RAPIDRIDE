@@ -1,0 +1,24 @@
+@import 'leaflet/dist/leaflet.css';
+@import "tailwindcss";
+
+@layer base {
+  body {
+    background-color: #060711;
+    color: #ffffff;
+  }
+}
+
+/* Custom Scrollbar & Glow Effects */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #060711;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e1b4b;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #312e81;
+}
