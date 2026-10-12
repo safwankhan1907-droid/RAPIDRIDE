@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { UserButton, SignInButton, useUser } from "@clerk/nextjs";
 import dynamic from "next/dynamic";
+import RideHistory from "../components/RideHistory";
 
 const MapComponent = dynamic(() => import("../components/LiveMap"), { ssr: false });
 
@@ -73,7 +74,7 @@ export default function Home() {
       </header>
 
       {/* Main Grid */}
-      <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-7xl mx-auto">
+      <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-7xl mx-auto mb-10">
         {/* Booking Card */}
         <div className="bg-[#0e0a17]/90 backdrop-blur-2xl border border-purple-500/25 p-7 rounded-3xl shadow-2xl shadow-purple-950/50 flex flex-col justify-between">
           <div>
@@ -150,6 +151,11 @@ export default function Home() {
             <MapComponent />
           </div>
         </div>
+      </div>
+
+      {/* Ride History & Reviews Section */}
+      <div className="relative z-10 max-w-7xl mx-auto">
+        <RideHistory />
       </div>
     </main>
   );
