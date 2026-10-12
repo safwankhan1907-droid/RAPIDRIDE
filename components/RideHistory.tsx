@@ -2,9 +2,8 @@
 
 import React, { useState } from "react";
 import { Star, MapPin, CheckCircle, Clock } from "lucide-react";
-import { supabase } from "@/utils/supabase/client";
+import { supabase } from "../utils/supabase/client";
 
-// Define the Props interface for TypeScript
 interface RideHistoryProps {
   rides: any[];
   onRideUpdated: () => void;
