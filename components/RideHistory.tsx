@@ -22,6 +22,7 @@ interface RideHistoryProps {
 export default function RideHistory({ rides = [], onRideUpdated }: RideHistoryProps) {
   const [selectedRide, setSelectedRide] = useState<Ride | null>(null)
   const [rating, setRating] = useState<number>(5)
+  const [hoverRating, setHoverRating] = useState<number>(0)
   const [review, setReview] = useState<string>('')
   const [submitting, setSubmitting] = useState(false)
 
@@ -134,18 +135,27 @@ export default function RideHistory({ rides = [], onRideUpdated }: RideHistoryPr
               </div>
             </div>
 
-            {/* Rating & Review Input Section */}
+            {/* Rating & Review Input Section with Hover & Click Support */}
             <div className="flex flex-col gap-2 border-t border-zinc-800 pt-3">
               <label className="text-[10px] uppercase tracking-wider text-zinc-400 font-medium">Rate Your Ride</label>
               <div className="flex gap-2 text-2xl cursor-pointer">
                 {[1, 2, 3, 4, 5].map((star) => (
-                  <span
+                  <button
                     key={star}
+                    type="button"
                     onClick={() => setRating(star)}
-                    className={star <= rating ? 'text-amber-400' : 'text-zinc-700'}
+                    onMouseEnter={() => setHoverRating(star)}
+                    onMouseLeave={() => setHoverRating(0)}
+                    className="focus:outline-none transition transform hover:scale-110"
                   >
-                    ★
-                  </span>
+                    <span
+                      className={
+                        star <= (hoverRating || rating) ? 'text-amber-400' : 'text-zinc-700'
+                      }
+                    >
+                      ★
+                    </span>
+                  </button>
                 ))}
               </div>
 
