@@ -113,19 +113,19 @@ export default function Home() {
   return (
     <main className="min-h-screen text-purple-100 p-6 md:p-10 selection:bg-rose-500 selection:text-white relative overflow-hidden">
       
-      {/* Background Image Layer with Dark Overlay for Readability */}
+      {/* Background Image Layer with Lighter Overlay for Sharp & Clear View */}
       <div className="absolute inset-0 z-0">
         <img
           src="/rapidride-hero-bg.png"
           alt="RapidRide Anime Background"
           className="w-full h-full object-cover"
         />
-        {/* Dark semi-transparent gradient overlay so your cards stand out clearly */}
-        <div className="absolute inset-0 bg-[#06040c]/80 backdrop-blur-[1px]" />
+        {/* Soft dark tint so cards remain readable without blurring the background */}
+        <div className="absolute inset-0 bg-[#06040c]/40" />
       </div>
 
       {/* Header */}
-      <header className="relative z-10 flex items-center justify-between border-b border-purple-900/40 pb-5 mb-8 backdrop-blur-md">
+      <header className="relative z-10 flex items-center justify-between border-b border-purple-900/40 pb-5 mb-8 backdrop-blur-md px-4 rounded-2xl bg-black/30">
         <div className="flex items-center space-x-3">
           <div className="bg-gradient-to-tr from-rose-500 via-purple-600 to-indigo-600 text-white font-black px-3.5 py-1.5 rounded-xl shadow-lg shadow-rose-500/30 text-lg tracking-wider">
             R
@@ -158,7 +158,7 @@ export default function Home() {
       {/* Main Grid */}
       <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-7xl mx-auto mb-10">
         {/* Booking Card */}
-        <div className="bg-[#0e0a17]/85 backdrop-blur-xl border border-purple-500/30 p-7 rounded-3xl shadow-2xl shadow-purple-950/50 flex flex-col justify-between">
+        <div className="bg-[#0e0a17]/70 backdrop-blur-md border border-purple-500/30 p-7 rounded-3xl shadow-2xl shadow-purple-950/50 flex flex-col justify-between">
           <div>
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xs font-mono font-bold tracking-widest text-rose-400 uppercase">Book Your Ride</h2>
@@ -226,7 +226,7 @@ export default function Home() {
         </div>
 
         {/* Live Fleet Radar Map Card */}
-        <div className="bg-[#0e0a17]/85 backdrop-blur-xl border border-purple-500/30 p-7 rounded-3xl shadow-2xl shadow-purple-950/50 flex flex-col">
+        <div className="bg-[#0e0a17]/70 backdrop-blur-md border border-purple-500/30 p-7 rounded-3xl shadow-2xl shadow-purple-950/50 flex flex-col">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xs font-mono font-bold tracking-widest text-rose-400 uppercase">Live Fleet Radar</h2>
             <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
