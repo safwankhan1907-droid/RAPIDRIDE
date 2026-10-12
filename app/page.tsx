@@ -4,8 +4,7 @@ import React, { useState } from "react";
 import { UserButton, SignedIn, SignedOut, SignInButton } from "@clerk/nextjs";
 import dynamic from "next/dynamic";
 
-// Leaflet map dynamic import to avoid SSR errors
-const MapComponent = dynamic(() => import("@/components/MapComponent"), { ssr: false });
+const MapComponent = dynamic(() => import("@/components/LiveMap"), { ssr: false });
 
 export default function Home() {
   const [pickup, setPickup] = useState("");
@@ -36,23 +35,37 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-[#0a0a0c] text-white p-6">
-      {/* Header with Branding and Clerk Auth */}
-      <header className="flex items-center justify-between border-b border-gray-800 pb-4 mb-8">
+    <main className="min-h-screen bg-[#07080a] text-zinc-100 p-6 md:p-10 selection:bg-indigo-500 selection:text-white">
+      {/* Glow Effects Background */}
+      <div className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-900/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-emerald-900/10 rounded-full blur-3xl pointer-events-none" />
+
+      {/* Header */}
+      <header className="relative z-10 flex items-center justify-between border-b border-zinc-800/80 pb-5 mb-8 backdrop-blur-md">
         <div className="flex items-center space-x-3">
-          <div className="bg-white text-black font-extrabold px-3 py-1 rounded text-lg">R</div>
-          <span className="text-xl font-bold tracking-wider">RAPIDRIDE</span>
-        </div>
-        <div className="flex items-center space-x-4">
-          <span className="text-xs bg-emerald-950 text-emerald-400 border border-emerald-800 px-3 py-1 rounded-full font-medium">
-            Stripe Live Mode Active
+          <div className="bg-gradient-to-br from-indigo-500 to-violet-600 text-white font-extrabold px-3.5 py-1.5 rounded-xl shadow-lg shadow-indigo-500/20 text-lg tracking-wider">
+            R
+          </div>
+          <span className="text-xl font-bold tracking-widest bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">
+            RAPIDRIDE
           </span>
+        </div>
+
+        <div className="flex items-center space-x-4">
+          <div className="hidden sm:flex items-center space-x-2 bg-emerald-950/40 border border-emerald-800/50 px-3 py-1.5 rounded-full backdrop-blur-sm">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-xs text-emerald-400 font-medium tracking-wide">Stripe Live</span>
+          </div>
+
           <SignedIn>
-            <UserButton afterSignOutUrl="/" />
+            <div className="border border-zinc-700/60 rounded-full p-1 bg-zinc-900/60 shadow-inner">
+              <UserButton afterSignOutUrl="/" />
+            </div>
           </SignedIn>
+
           <SignedOut>
             <SignInButton mode="modal">
-              <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition">
+              <button className="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2 rounded-xl text-xs font-semibold tracking-wider uppercase transition-all shadow-lg shadow-indigo-600/30 hover:scale-[1.02] active:scale-[0.98]">
                 Sign In
               </button>
             </SignInButton>
@@ -60,105 +73,84 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Main Grid Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Booking Section */}
-        <div className="bg-[#121216] border border-gray-800 p-6 rounded-2xl shadow-xl">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-lg font-semibold">BOOK YOUR CAB</h2>
-            <span className="text-xs bg-gray-800 text-gray-300 px-2.5 py-1 rounded">STRIPE PAY</span>
+      {/* Main Grid */}
+      <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-7xl mx-auto">
+        {/* Booking Card */}
+        <div className="bg-[#0f1117]/80 backdrop-blur-xl border border-zinc-800/80 p-7 rounded-3xl shadow-2xl shadow-black/50 flex flex-col justify-between">
+          <div>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-sm font-semibold tracking-widest text-zinc-300 uppercase">Book Your Ride</h2>
+              <span className="text-[10px] font-mono tracking-wider bg-zinc-900 text-indigo-400 border border-indigo-900/40 px-3 py-1 rounded-md">
+                SECURE STRIPE PAY
+              </span>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[11px] font-medium tracking-wider text-zinc-400 mb-1.5 uppercase">
+                  Pickup Location
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g., Kat Kat Gate..."
+                  value={pickup}
+                  onChange={(e) => setPickup(e.target.value)}
+                  className="w-full bg-[#07080a] border border-zinc-800/80 rounded-xl px-4 py-3 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-indigo-500 transition shadow-inner"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-medium tracking-wider text-zinc-400 mb-1.5 uppercase">
+                  Dropoff Destination
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g., Roshan Gate..."
+                  value={dropoff}
+                  onChange={(e) => setDropoff(e.target.value)}
+                  className="w-full bg-[#07080a] border border-zinc-800/80 rounded-xl px-4 py-3 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-indigo-500 transition shadow-inner"
+                />
+              </div>
+            </div>
           </div>
 
-          <div className="space-y-4">
-            <div>
-              <label className="block text-xs text-gray-400 mb-1">PICKUP LOCATION</label>
-              <input
-                type="text"
-                placeholder="e.g., Kat Kat Gate..."
-                value={pickup}
-                onChange={(e) => setPickup(e.target.value)}
-                className="w-full bg-[#1a1a20] border border-gray-800 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-blue-600"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs text-gray-400 mb-1">DROPOFF DESTINATION</label>
-              <input
-                type="text"
-                placeholder="e.g., Roshan Gate..."
-                value={dropoff}
-                onChange={(e) => setDropoff(e.target.value)}
-                className="w-full bg-[#1a1a20] border border-gray-800 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-blue-600"
-              />
-            </div>
-
+          <div className="mt-8 pt-4 border-t border-zinc-800/60">
             <SignedIn>
               <button
                 onClick={handleBooking}
                 disabled={loading}
-                className="w-full bg-white hover:bg-gray-200 text-black font-semibold py-3.5 rounded-xl transition mt-4 flex items-center justify-center space-x-2"
+                className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-zinc-950 font-bold py-4 rounded-2xl transition-all shadow-lg shadow-emerald-500/20 flex items-center justify-center space-x-2 active:scale-[0.99]"
               >
-                <span>{loading ? "Processing..." : "PAY WITH STRIPE"}</span>
-                <span className="text-emerald-600 font-bold">₹345</span>
+                <span className="tracking-wide uppercase text-sm">{loading ? "Processing..." : "Pay with Stripe"}</span>
+                <span className="bg-zinc-950/10 px-2 py-0.5 rounded-lg text-xs font-mono font-extrabold">₹345</span>
               </button>
             </SignedIn>
 
             <SignedOut>
-              <div className="text-center pt-2">
-                <p className="text-xs text-red-400 mb-2">Error: Unauthorized. Please login to book a ride</p>
+              <div className="text-center">
+                <p className="text-xs text-rose-400 mb-3 bg-rose-950/30 border border-rose-900/40 py-2 rounded-xl">
+                  ⚠️ Unauthorized. Please login to book a ride.
+                </p>
                 <SignInButton mode="modal">
-                  <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3.5 rounded-xl transition">
+                  <button className="w-full bg-zinc-800 hover:bg-zinc-700 text-zinc-100 font-semibold py-3.5 rounded-2xl text-xs uppercase tracking-wider transition border border-zinc-700/60">
                     Login to Book Ride
                   </button>
                 </SignInButton>
               </div>
             </SignedOut>
 
-            {error && <p className="text-xs text-red-400 mt-2 text-center">{error}</p>}
+            {error && <p className="text-xs text-rose-400 mt-3 text-center">{error}</p>}
           </div>
         </div>
 
-        {/* Live Fleet Radar Map Section */}
-        <div className="bg-[#121216] border border-gray-800 p-6 rounded-2xl shadow-xl flex flex-col">
-          <h2 className="text-lg font-semibold mb-4">LIVE FLEET RADAR</h2>
-          <div className="flex-1 min-h-[300px] rounded-xl overflow-hidden border border-gray-800 relative">
+        {/* Live Fleet Radar Map Card */}
+        <div className="bg-[#0f1117]/80 backdrop-blur-xl border border-zinc-800/80 p-7 rounded-3xl shadow-2xl shadow-black/50 flex flex-col">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-sm font-semibold tracking-widest text-zinc-300 uppercase">Live Fleet Radar</h2>
+            <span className="w-2 h-2 rounded-full bg-indigo-500 animate-ping" />
+          </div>
+          <div className="flex-1 min-h-[320px] rounded-2xl overflow-hidden border border-zinc-800/80 relative shadow-inner">
             <MapComponent />
-          </div>
-        </div>
-      </div>
-
-      {/* Ride History & Reviews */}
-      <div className="mt-8 bg-[#121216] border border-gray-800 p-6 rounded-2xl shadow-xl">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold">RIDE HISTORY & REVIEWS</h2>
-          <span className="text-xs bg-gray-800 text-gray-300 px-2.5 py-1 rounded">8 RIDES</span>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-[#1a1a20] p-4 rounded-xl border border-gray-800 flex justify-between items-center">
-            <div>
-              <p className="text-xs text-gray-400">From: kat kat gate</p>
-              <p className="text-xs text-gray-400">To: roshan gate</p>
-              <p className="text-xs text-amber-400 mt-1">Not Rated Yet</p>
-            </div>
-            <div className="text-right">
-              <span className="text-emerald-400 font-bold">₹300</span>
-              <button className="block mt-2 bg-gray-800 hover:bg-gray-700 text-xs px-3 py-1.5 rounded transition">
-                Rate & Receipt
-              </button>
-            </div>
-          </div>
-          <div className="bg-[#1a1a20] p-4 rounded-xl border border-gray-800 flex justify-between items-center">
-            <div>
-              <p className="text-xs text-gray-400">From: kat kat gate</p>
-              <p className="text-xs text-gray-400">To: roshan gate</p>
-              <p className="text-xs text-amber-400 mt-1">Not Rated Yet</p>
-            </div>
-            <div className="text-right">
-              <span className="text-emerald-400 font-bold">₹300</span>
-              <button className="block mt-2 bg-gray-800 hover:bg-gray-700 text-xs px-3 py-1.5 rounded transition">
-                Rate & Receipt
-              </button>
-            </div>
           </div>
         </div>
       </div>
