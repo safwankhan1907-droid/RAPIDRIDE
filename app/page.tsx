@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import { UserButton, SignedIn, SignedOut, SignInButton } from "@clerk/nextjs";
 import dynamic from "next/dynamic";
 
-// Using correct relative path to avoid module-not-found error on Vercel
 const MapComponent = dynamic(() => import("../components/LiveMap"), { ssr: false });
 
 export default function Home() {
@@ -60,7 +59,7 @@ export default function Home() {
 
           <SignedIn>
             <div className="border border-zinc-700/60 rounded-full p-1 bg-zinc-900/60 shadow-inner">
-              <UserButton afterSignOutUrl="/" />
+              <UserButton />
             </div>
           </SignedIn>
 
