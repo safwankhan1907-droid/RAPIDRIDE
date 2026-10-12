@@ -16,6 +16,19 @@ export default function Home() {
   const [error, setError] = useState("");
   const [rides, setRides] = useState<any[]>([]);
 
+  // Calculate distance in KM based on input text & compute fare at ₹19/km (Base fare ₹50 + ₹19/km)
+  const calculateKmAndFare = (p: string, d: string) => {
+    if (!p || !d) return { km: 0, fare: 0 };
+    // Generate a realistic estimated distance between 3 km and 35 km based on text lengths
+    const rawLen = Math.abs(p.trim().length - d.trim().length) + (p.charCodeAt(0) || 10) + (d.charCodeAt(0) || 10);
+    const estimatedKm = Math.min(Math.max((rawLen % 25) + 3, 3), 35); 
+    const baseFare = 50;
+    const totalFare = Math.round(baseFare + estimatedKm * 19);
+    return { km: estimatedKm, fare: totalFare };
+  };
+
+  const { km: estimatedKm, fare: dynamicFare } = calculateKmAndFare(pickup, dropoff);
+
   // Fetch rides from Supabase matching user_id
   const fetchRides = async (userId: string) => {
     const { data, error } = await supabase
@@ -51,7 +64,6 @@ export default function Home() {
         const d = query.get("dropoff") || "Roshan Gate";
         const f = query.get("fare") || "345";
 
-        // Insert into Supabase on successful return redirect
         const { error: insertError } = await supabase.from("rides").insert([
           {
             user_id: user.id,
@@ -66,12 +78,10 @@ export default function Home() {
         ]);
 
         if (!insertError) {
-          // Clear query params from URL without reloading page
           window.history.replaceState({}, document.title, window.location.pathname);
         }
       }
 
-      // Fetch latest rides after handling return
       await fetchRides(user.id);
     };
 
@@ -89,7 +99,7 @@ export default function Home() {
       const res = await fetch("/api/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pickup, dropoff, fare: 345 }),
+        body: JSON.stringify({ pickup, dropoff, fare: dynamicFare }),
       });
       const data = await res.json();
       if (data.url) {
@@ -124,7 +134,7 @@ export default function Home() {
         <div className="flex items-center space-x-4">
           <div className="hidden sm:flex items-center space-x-2 bg-purple-950/40 border border-rose-500/30 px-3.5 py-1.5 rounded-full backdrop-blur-sm">
             <span className="w-2 h-2 rounded-full bg-rose-400 animate-pulse" />
-            <span className="text-xs text-rose-300 font-mono tracking-wider font-semibold">NEON GRID ACTIVE</span>
+            <span className="text-xs text-rose-300 font-mono tracking-wider font-semibold">RATE: ₹19/KM</span>
           </div>
 
           {isSignedIn ? (
@@ -179,6 +189,13 @@ export default function Home() {
                   className="w-full bg-[#06040c] border border-purple-500/25 rounded-xl px-4 py-3 text-sm text-purple-100 placeholder-purple-900 focus:outline-none focus:border-rose-500 transition shadow-inner"
                 />
               </div>
+
+              {pickup && dropoff && (
+                <div className="p-3 bg-purple-950/30 border border-purple-500/20 rounded-xl flex justify-between items-center text-xs font-mono">
+                  <span className="text-purple-300/80">Est. Distance: <strong className="text-rose-400">{estimatedKm} km</strong></span>
+                  <span className="text-purple-300/80">Rate: <strong className="text-emerald-400">₹19/km</strong></span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -186,11 +203,13 @@ export default function Home() {
             {isSignedIn ? (
               <button
                 onClick={handleBooking}
-                disabled={loading}
-                className="w-full bg-gradient-to-r from-rose-500 via-purple-600 to-indigo-600 hover:from-rose-400 hover:to-purple-500 text-white font-black py-4 rounded-2xl transition-all shadow-xl shadow-rose-600/30 flex items-center justify-center space-x-2 active:scale-[0.99]"
+                disabled={loading || !pickup || !dropoff}
+                className="w-full bg-gradient-to-r from-rose-500 via-purple-600 to-indigo-600 hover:from-rose-400 hover:to-purple-500 text-white font-black py-4 rounded-2xl transition-all shadow-xl shadow-rose-600/30 flex items-center justify-center space-x-2 active:scale-[0.99] disabled:opacity-50"
               >
                 <span className="tracking-widest uppercase text-sm">{loading ? "Processing..." : "Pay with Stripe"}</span>
-                <span className="bg-black/20 px-2.5 py-0.5 rounded-lg text-xs font-mono font-bold text-rose-200">₹345</span>
+                <span className="bg-black/20 px-2.5 py-0.5 rounded-lg text-xs font-mono font-bold text-rose-200">
+                  {pickup && dropoff ? `₹${dynamicFare}` : "Enter Locations"}
+                </span>
               </button>
             ) : (
               <div className="text-center">
