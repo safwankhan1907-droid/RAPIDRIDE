@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useState } from "react";
-import { UserButton, SignedIn, SignedOut, SignInButton } from "@clerk/nextjs";
+import { UserButton, SignInButton, useUser } from "@clerk/nextjs";
 import dynamic from "next/dynamic";
 
 const MapComponent = dynamic(() => import("../components/LiveMap"), { ssr: false });
 
 export default function Home() {
+  const { isSignedIn } = useUser();
   const [pickup, setPickup] = useState("");
   const [dropoff, setDropoff] = useState("");
   const [loading, setLoading] = useState(false);
@@ -57,19 +58,17 @@ export default function Home() {
             <span className="text-xs text-emerald-400 font-medium tracking-wide">Stripe Live</span>
           </div>
 
-          <SignedIn>
+          {isSignedIn ? (
             <div className="border border-zinc-700/60 rounded-full p-1 bg-zinc-900/60 shadow-inner">
               <UserButton />
             </div>
-          </SignedIn>
-
-          <SignedOut>
+          ) : (
             <SignInButton mode="modal">
               <button className="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2 rounded-xl text-xs font-semibold tracking-wider uppercase transition-all shadow-lg shadow-indigo-600/30 hover:scale-[1.02] active:scale-[0.98]">
                 Sign In
               </button>
             </SignInButton>
-          </SignedOut>
+          )}
         </div>
       </header>
 
@@ -115,7 +114,7 @@ export default function Home() {
           </div>
 
           <div className="mt-8 pt-4 border-t border-zinc-800/60">
-            <SignedIn>
+            {isSignedIn ? (
               <button
                 onClick={handleBooking}
                 disabled={loading}
@@ -124,9 +123,7 @@ export default function Home() {
                 <span className="tracking-wide uppercase text-sm">{loading ? "Processing..." : "Pay with Stripe"}</span>
                 <span className="bg-zinc-950/10 px-2 py-0.5 rounded-lg text-xs font-mono font-extrabold">₹345</span>
               </button>
-            </SignedIn>
-
-            <SignedOut>
+            ) : (
               <div className="text-center">
                 <p className="text-xs text-rose-400 mb-3 bg-rose-950/30 border border-rose-900/40 py-2 rounded-xl">
                   ⚠️ Unauthorized. Please login to book a ride.
@@ -137,7 +134,7 @@ export default function Home() {
                   </button>
                 </SignInButton>
               </div>
-            </SignedOut>
+            )}
 
             {error && <p className="text-xs text-rose-400 mt-3 text-center">{error}</p>}
           </div>
