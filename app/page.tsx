@@ -16,7 +16,7 @@ export default function Home() {
   const [error, setError] = useState("");
   const [rides, setRides] = useState<any[]>([]);
 
-  // Fetch rides from Supabase when user is logged in
+  // Fetch rides from Supabase matching user_id
   const fetchRides = async () => {
     if (!user) return;
     const { data, error } = await supabase
@@ -26,7 +26,18 @@ export default function Home() {
       .order("created_at", { ascending: false });
 
     if (!error && data) {
-      setRides(data);
+      // Map database columns to component friendly format
+      const formatted = data.map((r) => ({
+        id: r.id,
+        pickup: r.pickup_location,
+        dropoff: r.dropoff_location,
+        fare: r.fare,
+        payment_id: r.payment_id,
+        status: r.status,
+        rating: r.rating,
+        review: r.review,
+      }));
+      setRides(formatted);
     }
   };
 
@@ -39,25 +50,30 @@ export default function Home() {
       if (query.get("success") === "true") {
         const p = query.get("pickup");
         const d = query.get("dropoff");
-        const f = query.get("fare");
+        const f = query.get("fare") || "345";
 
-        if (p && d && f) {
-          // Save ride to Supabase
+        if (p && d) {
+          // Save ride to Supabase with exact table columns
           supabase
             .from("rides")
             .insert([
               {
                 user_id: user.id,
-                pickup: p,
-                dropoff: d,
+                user_email: user.primaryEmailAddress?.emailAddress || "",
+                pickup_location: p,
+                dropoff_location: d,
                 fare: Number(f),
                 status: "Completed",
+                is_paid: true,
+                payment_id: "pi_" + Math.random().toString(36).substring(2, 15),
               },
             ])
             .then(({ error }) => {
               if (!error) {
                 fetchRides();
                 window.history.replaceState({}, document.title, "/");
+              } else {
+                console.error("Supabase Insert Error:", error.message);
               }
             });
         }
