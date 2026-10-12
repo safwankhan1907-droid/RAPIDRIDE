@@ -4,7 +4,8 @@ import React, { useState } from "react";
 import { UserButton, SignedIn, SignedOut, SignInButton } from "@clerk/nextjs";
 import dynamic from "next/dynamic";
 
-const MapComponent = dynamic(() => import("@/components/LiveMap"), { ssr: false });
+// Using correct relative path to avoid module-not-found error on Vercel
+const MapComponent = dynamic(() => import("../components/LiveMap"), { ssr: false });
 
 export default function Home() {
   const [pickup, setPickup] = useState("");
