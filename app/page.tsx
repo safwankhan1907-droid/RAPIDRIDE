@@ -16,20 +16,16 @@ export default function Home() {
   const [error, setError] = useState("");
   const [rides, setRides] = useState<any[]>([]);
 
-  // Calculate distance in KM based on input text & compute fare at ₹19/km (Base fare ₹50 + ₹19/km)
-  const calculateKmAndFare = (p: string, d: string) => {
-    if (!p || !d) return { km: 0, fare: 0 };
-    // Generate a realistic estimated distance between 3 km and 35 km based on text lengths
-    const rawLen = Math.abs(p.trim().length - d.trim().length) + (p.charCodeAt(0) || 10) + (d.charCodeAt(0) || 10);
-    const estimatedKm = Math.min(Math.max((rawLen % 25) + 3, 3), 35); 
-    const baseFare = 50;
-    const totalFare = Math.round(baseFare + estimatedKm * 19);
-    return { km: estimatedKm, fare: totalFare };
+  // Calculate dynamic fare at ₹19/km (Base ₹50 + ₹19/km)
+  const calculateDynamicFare = (p: string, d: string) => {
+    if (!p || !d) return 345;
+    const inputHash = (p.length + d.length) * 13 + (p.charCodeAt(0) || 10) + (d.charCodeAt(0) || 10);
+    const estimatedKm = Math.min(Math.max((inputHash % 27) + 4, 4), 30);
+    return Math.round(50 + estimatedKm * 19);
   };
 
-  const { km: estimatedKm, fare: dynamicFare } = calculateKmAndFare(pickup, dropoff);
+  const dynamicFare = calculateDynamicFare(pickup, dropoff);
 
-  // Fetch rides from Supabase matching user_id
   const fetchRides = async (userId: string) => {
     const { data, error } = await supabase
       .from("rides")
@@ -115,10 +111,18 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-[#06040c] text-purple-100 p-6 md:p-10 selection:bg-rose-500 selection:text-white">
-      {/* Unique Cyber-Orchid & Neon Rose Glow Backgrounds */}
-      <div className="absolute top-0 left-1/4 w-[450px] h-[450px] bg-purple-700/15 rounded-full blur-[140px] pointer-events-none" />
-      <div className="absolute top-1/3 right-1/4 w-[450px] h-[450px] bg-rose-600/15 rounded-full blur-[140px] pointer-events-none" />
+    <main className="min-h-screen text-purple-100 p-6 md:p-10 selection:bg-rose-500 selection:text-white relative overflow-hidden">
+      
+      {/* Background Image Layer with Dark Overlay for Readability */}
+      <div className="absolute inset-0 z-0">
+        <img
+          src="/rapidride-hero-bg.png"
+          alt="RapidRide Anime Background"
+          className="w-full h-full object-cover"
+        />
+        {/* Dark semi-transparent gradient overlay so your cards stand out clearly */}
+        <div className="absolute inset-0 bg-[#06040c]/80 backdrop-blur-[1px]" />
+      </div>
 
       {/* Header */}
       <header className="relative z-10 flex items-center justify-between border-b border-purple-900/40 pb-5 mb-8 backdrop-blur-md">
@@ -132,13 +136,13 @@ export default function Home() {
         </div>
 
         <div className="flex items-center space-x-4">
-          <div className="hidden sm:flex items-center space-x-2 bg-purple-950/40 border border-rose-500/30 px-3.5 py-1.5 rounded-full backdrop-blur-sm">
+          <div className="hidden sm:flex items-center space-x-2 bg-purple-950/60 border border-rose-500/30 px-3.5 py-1.5 rounded-full backdrop-blur-md">
             <span className="w-2 h-2 rounded-full bg-rose-400 animate-pulse" />
             <span className="text-xs text-rose-300 font-mono tracking-wider font-semibold">RATE: ₹19/KM</span>
           </div>
 
           {isSignedIn ? (
-            <div className="border border-purple-500/40 rounded-full p-1 bg-purple-950/30 shadow-inner">
+            <div className="border border-purple-500/50 rounded-full p-1 bg-purple-950/60 shadow-inner backdrop-blur-md">
               <UserButton />
             </div>
           ) : (
@@ -154,7 +158,7 @@ export default function Home() {
       {/* Main Grid */}
       <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-7xl mx-auto mb-10">
         {/* Booking Card */}
-        <div className="bg-[#0e0a17]/90 backdrop-blur-2xl border border-purple-500/25 p-7 rounded-3xl shadow-2xl shadow-purple-950/50 flex flex-col justify-between">
+        <div className="bg-[#0e0a17]/85 backdrop-blur-xl border border-purple-500/30 p-7 rounded-3xl shadow-2xl shadow-purple-950/50 flex flex-col justify-between">
           <div>
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xs font-mono font-bold tracking-widest text-rose-400 uppercase">Book Your Ride</h2>
@@ -165,7 +169,7 @@ export default function Home() {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-[11px] font-mono tracking-wider text-purple-300/70 mb-1.5 uppercase">
+                <label className="block text-[11px] font-mono tracking-wider text-purple-300/80 mb-1.5 uppercase">
                   Pickup Location
                 </label>
                 <input
@@ -173,12 +177,12 @@ export default function Home() {
                   placeholder="e.g., Kat Kat Gate..."
                   value={pickup}
                   onChange={(e) => setPickup(e.target.value)}
-                  className="w-full bg-[#06040c] border border-purple-500/25 rounded-xl px-4 py-3 text-sm text-purple-100 placeholder-purple-900 focus:outline-none focus:border-rose-500 transition shadow-inner"
+                  className="w-full bg-[#06040c]/80 border border-purple-500/30 rounded-xl px-4 py-3 text-sm text-purple-100 placeholder-purple-900 focus:outline-none focus:border-rose-500 transition shadow-inner backdrop-blur-sm"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-mono tracking-wider text-purple-300/70 mb-1.5 uppercase">
+                <label className="block text-[11px] font-mono tracking-wider text-purple-300/80 mb-1.5 uppercase">
                   Dropoff Destination
                 </label>
                 <input
@@ -186,25 +190,18 @@ export default function Home() {
                   placeholder="e.g., Roshan Gate..."
                   value={dropoff}
                   onChange={(e) => setDropoff(e.target.value)}
-                  className="w-full bg-[#06040c] border border-purple-500/25 rounded-xl px-4 py-3 text-sm text-purple-100 placeholder-purple-900 focus:outline-none focus:border-rose-500 transition shadow-inner"
+                  className="w-full bg-[#06040c]/80 border border-purple-500/30 rounded-xl px-4 py-3 text-sm text-purple-100 placeholder-purple-900 focus:outline-none focus:border-rose-500 transition shadow-inner backdrop-blur-sm"
                 />
               </div>
-
-              {pickup && dropoff && (
-                <div className="p-3 bg-purple-950/30 border border-purple-500/20 rounded-xl flex justify-between items-center text-xs font-mono">
-                  <span className="text-purple-300/80">Est. Distance: <strong className="text-rose-400">{estimatedKm} km</strong></span>
-                  <span className="text-purple-300/80">Rate: <strong className="text-emerald-400">₹19/km</strong></span>
-                </div>
-              )}
             </div>
           </div>
 
-          <div className="mt-8 pt-4 border-t border-purple-900/40">
+          <div className="mt-8 pt-4 border-t border-purple-900/50">
             {isSignedIn ? (
               <button
                 onClick={handleBooking}
                 disabled={loading || !pickup || !dropoff}
-                className="w-full bg-gradient-to-r from-rose-500 via-purple-600 to-indigo-600 hover:from-rose-400 hover:to-purple-500 text-white font-black py-4 rounded-2xl transition-all shadow-xl shadow-rose-600/30 flex items-center justify-center space-x-2 active:scale-[0.99] disabled:opacity-50"
+                className="w-full bg-gradient-to-r from-rose-500 via-purple-600 to-indigo-600 hover:from-rose-400 hover:to-purple-500 text-white font-black py-4 rounded-2xl transition-all shadow-xl shadow-rose-600/30 flex items-center justify-center space-x-2 active:scale-[0.99] disabled:opacity-60"
               >
                 <span className="tracking-widest uppercase text-sm">{loading ? "Processing..." : "Pay with Stripe"}</span>
                 <span className="bg-black/20 px-2.5 py-0.5 rounded-lg text-xs font-mono font-bold text-rose-200">
@@ -213,11 +210,11 @@ export default function Home() {
               </button>
             ) : (
               <div className="text-center">
-                <p className="text-xs text-rose-300 mb-3 bg-rose-950/40 border border-rose-500/30 py-2.5 rounded-xl font-medium">
+                <p className="text-xs text-rose-300 mb-3 bg-rose-950/70 border border-rose-500/30 py-2.5 rounded-xl font-medium backdrop-blur-sm">
                   ⚠️ Unauthorized. Please login to book a ride.
                 </p>
                 <SignInButton mode="modal">
-                  <button className="w-full bg-purple-950/60 hover:bg-purple-900 text-rose-300 font-bold py-3.5 rounded-2xl text-xs uppercase tracking-widest transition border border-rose-500/30 shadow-lg">
+                  <button className="w-full bg-purple-950/80 hover:bg-purple-900 text-rose-300 font-bold py-3.5 rounded-2xl text-xs uppercase tracking-widest transition border border-rose-500/30 shadow-lg backdrop-blur-sm">
                     Login to Book Ride
                   </button>
                 </SignInButton>
@@ -229,12 +226,12 @@ export default function Home() {
         </div>
 
         {/* Live Fleet Radar Map Card */}
-        <div className="bg-[#0e0a17]/90 backdrop-blur-2xl border border-purple-500/25 p-7 rounded-3xl shadow-2xl shadow-purple-950/50 flex flex-col">
+        <div className="bg-[#0e0a17]/85 backdrop-blur-xl border border-purple-500/30 p-7 rounded-3xl shadow-2xl shadow-purple-950/50 flex flex-col">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xs font-mono font-bold tracking-widest text-rose-400 uppercase">Live Fleet Radar</h2>
             <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
           </div>
-          <div className="flex-1 min-h-[320px] rounded-2xl overflow-hidden border border-purple-500/25 relative shadow-inner">
+          <div className="flex-1 min-h-[320px] rounded-2xl overflow-hidden border border-purple-500/30 relative shadow-inner backdrop-blur-sm">
             <MapComponent />
           </div>
         </div>
