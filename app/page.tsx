@@ -1,20 +1,75 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { UserButton, SignInButton, useUser } from "@clerk/nextjs";
 import dynamic from "next/dynamic";
 import RideHistory from "../components/RideHistory";
+import { supabase } from "@/utils/supabase/client";
 
 const MapComponent = dynamic(() => import("../components/LiveMap"), { ssr: false });
 
 export default function Home() {
-  const { isSignedIn } = useUser();
+  const { user, isSignedIn } = useUser();
   const [pickup, setPickup] = useState("");
   const [dropoff, setDropoff] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [rides, setRides] = useState<any[]>([]);
+
+  // Fetch rides from Supabase when user is logged in
+  const fetchRides = async () => {
+    if (!user) return;
+    const { data, error } = await supabase
+      .from("rides")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+
+    if (!error && data) {
+      setRides(data);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      fetchRides();
+
+      // Check if redirected back with success from Stripe
+      const query = new URLSearchParams(window.location.search);
+      if (query.get("success") === "true") {
+        const p = query.get("pickup");
+        const d = query.get("dropoff");
+        const f = query.get("fare");
+
+        if (p && d && f) {
+          // Save ride to Supabase
+          supabase
+            .from("rides")
+            .insert([
+              {
+                user_id: user.id,
+                pickup: p,
+                dropoff: d,
+                fare: Number(f),
+                status: "Completed",
+              },
+            ])
+            .then(({ error }) => {
+              if (!error) {
+                fetchRides();
+                window.history.replaceState({}, document.title, "/");
+              }
+            });
+        }
+      }
+    }
+  }, [user]);
 
   const handleBooking = async () => {
+    if (!pickup || !dropoff) {
+      setError("Please enter both pickup and dropoff locations");
+      return;
+    }
     try {
       setLoading(true);
       setError("");
@@ -155,7 +210,7 @@ export default function Home() {
 
       {/* Ride History & Reviews Section */}
       <div className="relative z-10 max-w-7xl mx-auto">
-        <RideHistory />
+        <RideHistory rides={rides} onRideUpdated={fetchRides} />
       </div>
     </main>
   );
