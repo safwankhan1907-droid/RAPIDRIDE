@@ -17,16 +17,14 @@ export default function Home() {
   const [rides, setRides] = useState<any[]>([]);
 
   // Fetch rides from Supabase matching user_id
-  const fetchRides = async () => {
-    if (!user) return;
+  const fetchRides = async (userId: string) => {
     const { data, error } = await supabase
       .from("rides")
       .select("*")
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .order("created_at", { ascending: false });
 
     if (!error && data) {
-      // Map database columns to component friendly format
       const formatted = data.map((r) => ({
         id: r.id,
         pickup: r.pickup_location,
@@ -42,43 +40,42 @@ export default function Home() {
   };
 
   useEffect(() => {
-    if (user) {
-      fetchRides();
+    if (!user) return;
 
-      // Check if redirected back with success from Stripe
+    const handleStripeReturn = async () => {
       const query = new URLSearchParams(window.location.search);
-      if (query.get("success") === "true") {
-        const p = query.get("pickup");
-        const d = query.get("dropoff");
+      const isSuccess = query.get("success");
+
+      if (isSuccess === "true") {
+        const p = query.get("pickup") || "Kat Kat Gate";
+        const d = query.get("dropoff") || "Roshan Gate";
         const f = query.get("fare") || "345";
 
-        if (p && d) {
-          // Save ride to Supabase with exact table columns
-          supabase
-            .from("rides")
-            .insert([
-              {
-                user_id: user.id,
-                user_email: user.primaryEmailAddress?.emailAddress || "",
-                pickup_location: p,
-                dropoff_location: d,
-                fare: Number(f),
-                status: "Completed",
-                is_paid: true,
-                payment_id: "pi_" + Math.random().toString(36).substring(2, 15),
-              },
-            ])
-            .then(({ error }) => {
-              if (!error) {
-                fetchRides();
-                window.history.replaceState({}, document.title, "/");
-              } else {
-                console.error("Supabase Insert Error:", error.message);
-              }
-            });
+        // Insert into Supabase on successful return redirect
+        const { error: insertError } = await supabase.from("rides").insert([
+          {
+            user_id: user.id,
+            user_email: user.primaryEmailAddress?.emailAddress || "",
+            pickup_location: p,
+            dropoff_location: d,
+            fare: Number(f),
+            status: "Completed",
+            is_paid: true,
+            payment_id: "cs_live_" + Math.random().toString(36).substring(2, 15),
+          },
+        ]);
+
+        if (!insertError) {
+          // Clear query params from URL without reloading page
+          window.history.replaceState({}, document.title, window.location.pathname);
         }
       }
-    }
+
+      // Fetch latest rides after handling return
+      await fetchRides(user.id);
+    };
+
+    handleStripeReturn();
   }, [user]);
 
   const handleBooking = async () => {
@@ -226,7 +223,7 @@ export default function Home() {
 
       {/* Ride History & Reviews Section */}
       <div className="relative z-10 max-w-7xl mx-auto">
-        <RideHistory rides={rides} onRideUpdated={fetchRides} />
+        <RideHistory rides={rides} onRideUpdated={() => user && fetchRides(user.id)} />
       </div>
     </main>
   );
