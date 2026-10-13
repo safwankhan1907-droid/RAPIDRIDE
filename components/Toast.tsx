@@ -2,7 +2,6 @@
 "use client";
 
 import React from 'react';
-import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
 
 interface ToastProps {
   message: string;
@@ -13,9 +12,11 @@ interface ToastProps {
 export default function Toast({ message, type = 'success', onClose }: ToastProps) {
   return (
     <div className="fixed bottom-6 right-6 z-50 flex items-center space-x-3 bg-[#0e0a17]/95 border border-purple-500/40 px-5 py-4 rounded-2xl shadow-2xl shadow-purple-950/80 backdrop-blur-xl animate-bounce-short">
-      {type === 'success' && <CheckCircle2 className="text-emerald-400 shrink-0" size={20} />}
-      {type === 'error' && <AlertCircle className="text-rose-400 shrink-0" size={20} />}
-      {type === 'info' && <Info className="text-purple-400 shrink-0" size={20} />}
+      <span className="text-lg shrink-0">
+        {type === 'success' && '✅'}
+        {type === 'error' && '❌'}
+        {type === 'info' && 'ℹ️'}
+      </span>
       
       <p className="text-xs font-mono font-medium text-purple-100 tracking-wider pr-2">
         {message}
@@ -23,9 +24,9 @@ export default function Toast({ message, type = 'success', onClose }: ToastProps
 
       <button
         onClick={onClose}
-        className="text-purple-400 hover:text-white transition p-1"
+        className="text-purple-400 hover:text-white transition p-1 font-bold text-xs"
       >
-        <X size={16} />
+        ✕
       </button>
     </div>
   );
