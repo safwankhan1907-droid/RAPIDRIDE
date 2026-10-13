@@ -5,8 +5,39 @@ import { UserButton, SignInButton, useUser } from "@clerk/nextjs";
 import dynamic from "next/dynamic";
 import RideHistory from "../components/RideHistory";
 import { supabase } from "@/utils/supabase/client";
+import { playSound } from "@/utils/notifications";
 
 const MapComponent = dynamic(() => import("../components/LiveMap"), { ssr: false });
+
+// Internal SimpleToast component to prevent external dependency/import issues
+function SimpleToast({
+  message,
+  type,
+  onClose,
+}: {
+  message: string;
+  type: "success" | "error" | "info";
+  onClose: () => void;
+}) {
+  return (
+    <div className="fixed bottom-6 right-6 z-50 flex items-center space-x-3 bg-[#0e0a17]/95 border border-purple-500/40 px-5 py-4 rounded-2xl shadow-2xl shadow-purple-950/80 backdrop-blur-xl">
+      <span className="text-lg shrink-0">
+        {type === "success" && "✅"}
+        {type === "error" && "❌"}
+        {type === "info" && "ℹ️"}
+      </span>
+      <p className="text-xs font-mono font-medium text-purple-100 tracking-wider pr-2">
+        {message}
+      </p>
+      <button
+        onClick={onClose}
+        className="text-purple-400 hover:text-white transition p-1 font-bold text-xs"
+      >
+        ✕
+      </button>
+    </div>
+  );
+}
 
 export default function Home() {
   const { user, isSignedIn } = useUser();
@@ -15,11 +46,16 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [rides, setRides] = useState<any[]>([]);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "success" | "error" | "info";
+  } | null>(null);
 
   // Calculate dynamic fare at ₹19/km (Base ₹50 + ₹19/km)
   const calculateDynamicFare = (p: string, d: string) => {
     if (!p || !d) return 345;
-    const inputHash = (p.length + d.length) * 13 + (p.charCodeAt(0) || 10) + (d.charCodeAt(0) || 10);
+    const inputHash =
+      (p.length + d.length) * 13 + (p.charCodeAt(0) || 10) + (d.charCodeAt(0) || 10);
     const estimatedKm = Math.min(Math.max((inputHash % 27) + 4, 4), 30);
     return Math.round(50 + estimatedKm * 19);
   };
@@ -56,6 +92,12 @@ export default function Home() {
       const isSuccess = query.get("success");
 
       if (isSuccess === "true") {
+        playSound("success");
+        setToast({
+          message: "Payment successful! Ride booked & synced.",
+          type: "success",
+        });
+
         const p = query.get("pickup") || "Kat Kat Gate";
         const d = query.get("dropoff") || "Roshan Gate";
         const f = query.get("fare") || "345";
@@ -85,13 +127,21 @@ export default function Home() {
   }, [user]);
 
   const handleBooking = async () => {
+    playSound("click");
     if (!pickup || !dropoff) {
       setError("Please enter both pickup and dropoff locations");
+      setToast({ message: "Please fill in all locations", type: "error" });
       return;
     }
     try {
       setLoading(true);
       setError("");
+      playSound("booking");
+      setToast({
+        message: "Redirecting to secure Stripe checkout...",
+        type: "info",
+      });
+
       const res = await fetch("/api/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -102,9 +152,11 @@ export default function Home() {
         window.location.href = data.url;
       } else {
         setError(data.error || "Something went wrong");
+        setToast({ message: data.error || "Something went wrong", type: "error" });
       }
     } catch (err: any) {
       setError("Failed to initiate ride booking");
+      setToast({ message: "Failed to initiate ride booking", type: "error" });
     } finally {
       setLoading(false);
     }
@@ -112,7 +164,6 @@ export default function Home() {
 
   return (
     <main className="min-h-screen text-purple-100 p-6 md:p-10 selection:bg-rose-500 selection:text-white relative overflow-hidden">
-      
       {/* Background Image Layer with Lighter Overlay for Sharp & Clear View */}
       <div className="absolute inset-0 z-0">
         <img
@@ -120,7 +171,6 @@ export default function Home() {
           alt="RapidRide Anime Background"
           className="w-full h-full object-cover"
         />
-        {/* Soft dark tint so cards remain readable without blurring the background */}
         <div className="absolute inset-0 bg-[#06040c]/40" />
       </div>
 
@@ -138,7 +188,9 @@ export default function Home() {
         <div className="flex items-center space-x-4">
           <div className="hidden sm:flex items-center space-x-2 bg-purple-950/60 border border-rose-500/30 px-3.5 py-1.5 rounded-full backdrop-blur-md">
             <span className="w-2 h-2 rounded-full bg-rose-400 animate-pulse" />
-            <span className="text-xs text-rose-300 font-mono tracking-wider font-semibold">RATE: ₹19/KM</span>
+            <span className="text-xs text-rose-300 font-mono tracking-wider font-semibold">
+              RATE: ₹19/KM
+            </span>
           </div>
 
           {isSignedIn ? (
@@ -161,7 +213,9 @@ export default function Home() {
         <div className="bg-[#0e0a17]/70 backdrop-blur-md border border-purple-500/30 p-7 rounded-3xl shadow-2xl shadow-purple-950/50 flex flex-col justify-between">
           <div>
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xs font-mono font-bold tracking-widest text-rose-400 uppercase">Book Your Ride</h2>
+              <h2 className="text-xs font-mono font-bold tracking-widest text-rose-400 uppercase">
+                Book Your Ride
+              </h2>
               <span className="text-[10px] font-mono tracking-wider bg-rose-500/10 text-rose-300 border border-rose-500/30 px-3 py-1 rounded-md">
                 SECURE STRIPE PAY
               </span>
@@ -203,7 +257,9 @@ export default function Home() {
                 disabled={loading || !pickup || !dropoff}
                 className="w-full bg-gradient-to-r from-rose-500 via-purple-600 to-indigo-600 hover:from-rose-400 hover:to-purple-500 text-white font-black py-4 rounded-2xl transition-all shadow-xl shadow-rose-600/30 flex items-center justify-center space-x-2 active:scale-[0.99] disabled:opacity-60"
               >
-                <span className="tracking-widest uppercase text-sm">{loading ? "Processing..." : "Pay with Stripe"}</span>
+                <span className="tracking-widest uppercase text-sm">
+                  {loading ? "Processing..." : "Pay with Stripe"}
+                </span>
                 <span className="bg-black/20 px-2.5 py-0.5 rounded-lg text-xs font-mono font-bold text-rose-200">
                   {pickup && dropoff ? `₹${dynamicFare}` : "Enter Locations"}
                 </span>
@@ -228,7 +284,9 @@ export default function Home() {
         {/* Live Fleet Radar Map Card */}
         <div className="bg-[#0e0a17]/70 backdrop-blur-md border border-purple-500/30 p-7 rounded-3xl shadow-2xl shadow-purple-950/50 flex flex-col">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xs font-mono font-bold tracking-widest text-rose-400 uppercase">Live Fleet Radar</h2>
+            <h2 className="text-xs font-mono font-bold tracking-widest text-rose-400 uppercase">
+              Live Fleet Radar
+            </h2>
             <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
           </div>
           <div className="flex-1 min-h-[320px] rounded-2xl overflow-hidden border border-purple-500/30 relative shadow-inner backdrop-blur-sm">
@@ -241,6 +299,15 @@ export default function Home() {
       <div className="relative z-10 max-w-7xl mx-auto">
         <RideHistory rides={rides} onRideUpdated={() => user && fetchRides(user.id)} />
       </div>
+
+      {/* Toast Notification Component */}
+      {toast && (
+        <SimpleToast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </main>
   );
 }
