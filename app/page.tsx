@@ -5,11 +5,10 @@ import { UserButton, SignInButton, useUser } from "@clerk/nextjs";
 import dynamic from "next/dynamic";
 import RideHistory from "../components/RideHistory";
 import { supabase } from "@/utils/supabase/client";
-import { playSound } from "@/utils/notifications";
 
 const MapComponent = dynamic(() => import("../components/LiveMap"), { ssr: false });
 
-// Internal SimpleToast component to prevent external dependency/import issues
+// Simple Toast Component
 function SimpleToast({
   message,
   type,
@@ -51,7 +50,41 @@ export default function Home() {
     type: "success" | "error" | "info";
   } | null>(null);
 
-  // Calculate dynamic fare at ₹19/km (Base ₹50 + ₹19/km)
+  // Safe Web Audio Bleep Generator
+  const playSound = (type: "success" | "click" | "booking") => {
+    try {
+      const windowAudio = window as any;
+      const AudioCtx = windowAudio.AudioContext || windowAudio.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      const now = ctx.currentTime;
+
+      if (type === "success") {
+        osc.frequency.setValueAtTime(587.33, now);
+        osc.frequency.setValueAtTime(880, now + 0.1);
+        gain.gain.setValueAtTime(0.1, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+      } else if (type === "click") {
+        osc.frequency.setValueAtTime(300, now);
+        gain.gain.setValueAtTime(0.05, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+      } else {
+        osc.frequency.setValueAtTime(440, now);
+        osc.frequency.setValueAtTime(659.25, now + 0.15);
+        gain.gain.setValueAtTime(0.1, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+      }
+      osc.start(now);
+      osc.stop(now + 0.3);
+    } catch (e) {
+      // Ignore if browser blocks audio
+    }
+  };
+
   const calculateDynamicFare = (p: string, d: string) => {
     if (!p || !d) return 345;
     const inputHash =
@@ -164,7 +197,7 @@ export default function Home() {
 
   return (
     <main className="min-h-screen text-purple-100 p-6 md:p-10 selection:bg-rose-500 selection:text-white relative overflow-hidden">
-      {/* Background Image Layer with Lighter Overlay for Sharp & Clear View */}
+      {/* Background Image Layer */}
       <div className="absolute inset-0 z-0">
         <img
           src="/rapidride-hero-bg.png"
@@ -295,12 +328,12 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Ride History & Reviews Section */}
+      {/* Ride History */}
       <div className="relative z-10 max-w-7xl mx-auto">
         <RideHistory rides={rides} onRideUpdated={() => user && fetchRides(user.id)} />
       </div>
 
-      {/* Toast Notification Component */}
+      {/* Toast Notification */}
       {toast && (
         <SimpleToast
           message={toast.message}
