@@ -217,4 +217,20 @@ export default function Home() {
           alt="RapidRide Anime Background"
           className="w-full h-full object-cover"
         />
-        <div className
+        <div className="absolute inset-0 bg-[#06040c]/40" />
+      </div>
+
+      <header className="relative z-10 flex items-center justify-between border-b border-purple-900/40 pb-5 mb-8 backdrop-blur-md px-4 rounded-2xl bg-black/30 max-w-7xl mx-auto">
+        <div className="flex items-center space-x-3">
+          <div className="bg-gradient-to-tr from-rose-500 via-purple-600 to-indigo-600 text-white font-black px-3.5 py-1.5 rounded-xl shadow-lg shadow-rose-500/30 text-lg tracking-wider">
+            R
+          </div>
+          <span className="text-xl font-extrabold tracking-widest bg-gradient-to-r from-rose-300 via-purple-300 to-indigo-300 bg-clip-text text-transparent">
+            RAPIDRIDE
+          </span>
+        </div>
+
+        <div className="flex items-center space-x-4">
+          <Link
+            href="/dashboard"
+            className="hidden sm:flex items-center space-x-2.5 bg-gradient-to-
