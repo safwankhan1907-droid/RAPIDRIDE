@@ -5,19 +5,6 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
-// Fix Leaflet default marker icon issue in Next.js
-import icon from "leaflet/dist/images/marker-icon.png";
-import iconShadow from "leaflet/dist/images/marker-shadow.png";
-
-const DefaultIcon = L.icon({
-  iconUrl: icon.src,
-  shadowUrl: iconShadow.src,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-});
-
-L.Marker.prototype.options.icon = DefaultIcon;
-
 interface LiveMapProps {
   pickup?: string;
   dropoff?: string;
@@ -96,6 +83,14 @@ function RouteUpdater({ pickup, dropoff }: { pickup?: string; dropoff?: string }
 export default function LiveMap({ pickup, dropoff }: LiveMapProps) {
   const center: [number, number] = [19.8762, 75.3361]; // Chhatrapati Sambhajinagar center
 
+  // Using a clean HTML/Div icon to bypass Leaflet default asset bundling issues in Next.js
+  const customIcon = L.divIcon({
+    className: "custom-map-marker",
+    html: `<div style="background-color: #f43f5e; width: 16px; height: 16px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px #f43f5e;"></div>`,
+    iconSize: [16, 16],
+    iconAnchor: [8, 8],
+  });
+
   return (
     <div className="w-full h-full relative">
       <MapContainer
@@ -108,7 +103,7 @@ export default function LiveMap({ pickup, dropoff }: LiveMapProps) {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        <Marker position={center}>
+        <Marker position={center} icon={customIcon}>
           <Popup>RapidRide Central Fleet Hub</Popup>
         </Marker>
         <RouteUpdater pickup={pickup} dropoff={dropoff} />
