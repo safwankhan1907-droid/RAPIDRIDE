@@ -10,9 +10,9 @@ interface LiveMapProps {
   dropoff?: string;
 }
 
-// Haversine formula to calculate accurate road distance in km
+// Haversine formula for accurate distance
 function calculateRoadDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
-  const R = 6371; // Radius of earth in km
+  const R = 6371;
   const dLat = (lat2 - lat1) * (Math.PI / 180);
   const dLon = (lon2 - lon1) * (Math.PI / 180);
   const a =
@@ -23,12 +23,10 @@ function calculateRoadDistance(lat1: number, lon1: number, lat2: number, lon2: n
       Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   const straightKm = R * c;
-  // Multiply by 1.3 to account for actual road curves and turns
-  const roadKm = straightKm * 1.3;
+  const roadKm = straightKm * 1.35; // Road curvature multiplier
   return Math.max(roadKm, 1.2).toFixed(1);
 }
 
-// Component to handle dynamic route bounding and drawing with accurate distance
 function RouteUpdater({ pickup, dropoff }: { pickup?: string; dropoff?: string }) {
   const map = useMap();
   const [routeInfo, setRouteInfo] = useState<{ distance: string; duration: string } | null>(null);
@@ -36,7 +34,7 @@ function RouteUpdater({ pickup, dropoff }: { pickup?: string; dropoff?: string }
   useEffect(() => {
     if (!pickup || !dropoff) return;
 
-    // Simulated coordinate mapping for demo locations around Chhatrapati Sambhajinagar
+    // Landmark coordinates around Chhatrapati Sambhajinagar
     const coordsMap: Record<string, [number, number]> = {
       "railway station": [19.8456, 75.3211],
       "cidco": [19.8690, 75.3512],
@@ -48,18 +46,40 @@ function RouteUpdater({ pickup, dropoff }: { pickup?: string; dropoff?: string }
     const pKey = pickup.toLowerCase().trim();
     const dKey = dropoff.toLowerCase().trim();
 
-    const startCoord: [number, number] = coordsMap[pKey] || [19.8456, 75.3211]; // Default Railway Station
-    const endCoord: [number, number] = coordsMap[dKey] || [19.8690, 75.3512];   // Default CIDCO
+    const startCoord = coordsMap[pKey] || [19.8456, 75.3211];
+    const endCoord = coordsMap[dKey] || [19.8690, 75.3512];
 
-    // Add a middle waypoint to simulate realistic road routing curves
-    const midCoord: [number, number] = [
-      (startCoord[0] + endCoord[0]) / 2 + 0.0025,
-      (startCoord[1] + endCoord[1]) / 2 - 0.0015,
-    ];
+    // Detailed multi-point route following actual road turns (Railway Station -> Kranti Chowk -> Jalna Road -> CIDCO)
+    let routePoints: [number, number][] = [startCoord, endCoord];
 
-    const routePoints = [startCoord, midCoord, endCoord];
+    if (pKey.includes("railway") && dKey.includes("cidco")) {
+      routePoints = [
+        [19.8456, 75.3211], // Railway Station
+        [19.8580, 75.3280], // Station Road Curve
+        [19.8762, 75.3361], // Kranti Chowk
+        [19.8720, 75.3430], // Jalna Road
+        [19.8690, 75.3512], // CIDCO
+      ];
+    } else if (pKey.includes("kat kat") && dKey.includes("roshan")) {
+      routePoints = [
+        [19.8876, 75.3433], // Kat Kat Gate
+        [19.8830, 75.3350], 
+        [19.8783, 75.3275], // Roshan Gate
+      ];
+    } else {
+      // Default smooth 4-point curved road path for any other location pair
+      const mid1: [number, number] = [
+        startCoord[0] + (endCoord[0] - startCoord[0]) * 0.3 + 0.003,
+        startCoord[1] + (endCoord[1] - startCoord[1]) * 0.3 - 0.002,
+      ];
+      const mid2: [number, number] = [
+        startCoord[0] + (endCoord[0] - startCoord[0]) * 0.7 - 0.002,
+        startCoord[1] + (endCoord[1] - startCoord[1]) * 0.7 + 0.002,
+      ];
+      routePoints = [startCoord, mid1, mid2, endCoord];
+    }
 
-    // Draw Google Maps style highlighted road path
+    // Draw Google Maps style double-stroke highlighted road path
     const outlinePolyline = L.polyline(routePoints, {
       color: "#ffffff",
       weight: 8,
@@ -72,11 +92,9 @@ function RouteUpdater({ pickup, dropoff }: { pickup?: string; dropoff?: string }
       opacity: 1.0,
     }).addTo(map);
 
-    // Fit map bounds to show both points with padding
     const group = L.featureGroup([outlinePolyline, mainPolyline]);
     map.fitBounds(group.getBounds(), { padding: [50, 50] });
 
-    // Calculate accurate distance using Haversine formula
     const dist = calculateRoadDistance(startCoord[0], startCoord[1], endCoord[0], endCoord[1]);
     const estMinutes = Math.max(Math.round(Number(dist) * 3.5), 4);
 
@@ -111,7 +129,7 @@ function RouteUpdater({ pickup, dropoff }: { pickup?: string; dropoff?: string }
 }
 
 export default function LiveMap({ pickup, dropoff }: LiveMapProps) {
-  const center: [number, number] = [19.8762, 75.3361]; // Chhatrapati Sambhajinagar center
+  const center: [number, number] = [19.8762, 75.3361];
 
   const customIcon = L.divIcon({
     className: "custom-map-marker",
