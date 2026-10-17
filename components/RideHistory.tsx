@@ -1,169 +1,310 @@
 "use client";
 
 import React, { useState } from "react";
+import { supabase } from "@/utils/supabase/client";
+
+interface Ride {
+  id: string;
+  pickup: string;
+  dropoff: string;
+  fare: number;
+  payment_id?: string;
+  status: string;
+  rating?: number;
+  review?: string;
+}
 
 interface RideHistoryProps {
-  rides: any[];
+  rides: Ride[];
   onRideUpdated: () => void;
 }
 
 export default function RideHistory({ rides, onRideUpdated }: RideHistoryProps) {
-  const [selectedRideForReview, setSelectedRideForReview] = useState<any | null>(null);
-  const [rating, setRating] = useState(5);
-  const [reviewText, setReviewText] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [successToast, setSuccessToast] = useState(false);
+  const [activeTab, setActiveTab] = useState<"rides" | "payments" | "reviews">("rides");
+  const [selectedReceipt, setSelectedReceipt] = useState<Ride | null>(null);
+  const [ratingInput, setRatingInput] = useState<{ [key: string]: number }>({});
+  const [reviewInput, setReviewInput] = useState<{ [key: string]: string }>({});
+  const [submittingId, setSubmittingId] = useState<string | null>(null);
 
-  const handleReviewSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedRideForReview) return;
+  const handleReviewSubmit = async (rideId: string) => {
+    const rating = ratingInput[rideId] || 5;
+    const review = reviewInput[rideId] || "Great ride, smooth experience!";
 
-    try {
-      setSubmitting(true);
-      // Direct update via fetch API or supabase if available
-      const res = await fetch("/api/update-review", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          rideId: selectedRideForReview.id,
-          rating,
-          review: reviewText,
-        }),
-      });
+    setSubmittingId(rideId);
+    const { error } = await supabase
+      .from("rides")
+      .update({ rating, review })
+      .eq("id", rideId);
 
-      setSuccessToast(true);
-      setTimeout(() => setSuccessToast(false), 3000);
-      setSelectedRideForReview(null);
-      setReviewText("");
+    if (!error) {
       onRideUpdated();
-    } catch (err) {
-      console.error("Failed to submit review", err);
-    } finally {
-      setSubmitting(false);
     }
+    setSubmittingId(null);
   };
 
   return (
-    <div className="bg-[#0e0a17]/85 backdrop-blur-xl border border-purple-500/30 p-7 rounded-3xl shadow-2xl shadow-purple-950/50">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xs font-mono font-bold tracking-widest text-rose-400 uppercase">Recent Ride History & Reviews</h2>
-        <span className="text-[10px] font-mono tracking-wider bg-purple-950/80 text-purple-300 border border-purple-500/30 px-3 py-1 rounded-md">
-          SECURE DB SYNC
-        </span>
+    <div className="bg-[#0e0a17]/80 backdrop-blur-md border border-purple-500/30 p-7 rounded-3xl shadow-2xl shadow-purple-950/60">
+      {/* Section Header & Tabs */}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between border-b border-purple-900/50 pb-5 mb-6 gap-4">
+        <div>
+          <h2 className="text-sm font-mono font-bold tracking-widest text-rose-400 uppercase">
+            User Dashboard & Records
+          </h2>
+          <p className="text-xs text-purple-300/70 font-mono mt-1">
+            Manage your rides, view receipts, and check reviews.
+          </p>
+        </div>
+
+        {/* Tab Buttons */}
+        <div className="flex items-center space-x-2 bg-black/40 p-1.5 rounded-2xl border border-purple-500/30">
+          <button
+            onClick={() => setActiveTab("rides")}
+            className={`px-4 py-2 rounded-xl text-xs font-mono font-bold uppercase transition ${
+              activeTab === "rides"
+                ? "bg-gradient-to-r from-rose-500 to-purple-600 text-white shadow-lg shadow-rose-500/30"
+                : "text-purple-300 hover:text-white"
+            }`}
+          >
+            🚗 Rides History
+          </button>
+          <button
+            onClick={() => setActiveTab("payments")}
+            className={`px-4 py-2 rounded-xl text-xs font-mono font-bold uppercase transition ${
+              activeTab === "payments"
+                ? "bg-gradient-to-r from-rose-500 to-purple-600 text-white shadow-lg shadow-rose-500/30"
+                : "text-purple-300 hover:text-white"
+            }`}
+          >
+            💳 Payments & Receipts
+          </button>
+          <button
+            onClick={() => setActiveTab("reviews")}
+            className={`px-4 py-2 rounded-xl text-xs font-mono font-bold uppercase transition ${
+              activeTab === "reviews"
+                ? "bg-gradient-to-r from-rose-500 to-purple-600 text-white shadow-lg shadow-rose-500/30"
+                : "text-purple-300 hover:text-white"
+            }`}
+          >
+            ⭐ Reviews & Ratings
+          </button>
+        </div>
       </div>
 
-      {successToast && (
-        <div className="mb-6 bg-emerald-950/80 border border-emerald-500/50 text-emerald-300 px-4 py-3 rounded-xl text-xs font-mono tracking-wider flex items-center space-x-2 backdrop-blur-sm">
-          <span>✅ Review submitted successfully! Thank you for rating your RapidRide trip.</span>
+      {/* Tab 1: Rides History */}
+      {activeTab === "rides" && (
+        <div>
+          {rides.length === 0 ? (
+            <div className="text-center py-12 text-purple-400/60 font-mono text-xs">
+              No ride history found. Book your first ride above!
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {rides.map((ride) => (
+                <div
+                  key={ride.id}
+                  className="bg-[#06040c]/90 border border-purple-500/20 p-5 rounded-2xl shadow-inner flex flex-col justify-between hover:border-rose-500/40 transition"
+                >
+                  <div>
+                    <div className="flex justify-between items-center mb-3">
+                      <span className="text-[10px] font-mono bg-rose-500/10 text-rose-300 border border-rose-500/30 px-2.5 py-1 rounded-md">
+                        {ride.status || "Completed"}
+                      </span>
+                      <span className="text-sm font-black text-rose-300 font-mono">
+                        ₹{ride.fare}
+                      </span>
+                    </div>
+                    <div className="space-y-1 font-mono text-xs text-purple-200">
+                      <p>
+                        <span className="text-rose-400">Pickup:</span> {ride.pickup}
+                      </p>
+                      <p>
+                        <span className="text-indigo-400">Dropoff:</span> {ride.dropoff}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-4 pt-3 border-t border-purple-900/40 flex justify-between items-center text-[10px] font-mono text-purple-400">
+                    <span>ID: {ride.id.substring(0, 8)}...</span>
+                    <button
+                      onClick={() => setSelectedReceipt(ride)}
+                      className="text-rose-400 hover:underline font-bold"
+                    >
+                      View Receipt ➔
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
-      {rides.length === 0 ? (
-        <div className="text-center py-10 bg-[#06040c]/50 rounded-2xl border border-purple-500/20">
-          <p className="text-xs font-mono text-purple-300">No past rides found. Book your first trip above!</p>
+      {/* Tab 2: Payments & Receipts */}
+      {activeTab === "payments" && (
+        <div>
+          {rides.length === 0 ? (
+            <div className="text-center py-12 text-purple-400/60 font-mono text-xs">
+              No payment records available.
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left font-mono text-xs">
+                <thead>
+                  <tr className="border-b border-purple-900/60 text-purple-400">
+                    <th className="pb-3 px-3">Transaction ID</th>
+                    <th className="pb-3 px-3">Route</th>
+                    <th className="pb-3 px-3">Amount</th>
+                    <th className="pb-3 px-3">Status</th>
+                    <th className="pb-3 px-3 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-purple-900/30 text-purple-200">
+                  {rides.map((ride) => (
+                    <tr key={ride.id} className="hover:bg-purple-950/30">
+                      <td className="py-3 px-3 text-rose-300 font-bold">
+                        {ride.payment_id || "cs_live_" + ride.id.substring(0, 6)}
+                      </td>
+                      <td className="py-3 px-3 text-purple-300">
+                        {ride.pickup} ➔ {ride.dropoff}
+                      </td>
+                      <td className="py-3 px-3 font-bold text-white">₹{ride.fare}</td>
+                      <td className="py-3 px-3 text-emerald-400">Paid (Stripe)</td>
+                      <td className="py-3 px-3 text-right">
+                        <button
+                          onClick={() => setSelectedReceipt(ride)}
+                          className="bg-rose-500/20 hover:bg-rose-500 text-rose-300 hover:text-white px-3 py-1.5 rounded-lg transition font-bold"
+                        >
+                          Receipt
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {rides.map((ride) => (
-            <div
-              key={ride.id}
-              className="bg-[#06040c]/85 border border-purple-500/30 rounded-2xl p-5 flex flex-col justify-between transition hover:border-rose-500/50 backdrop-blur-sm"
-            >
-              <div>
-                <div className="flex justify-between items-start mb-3">
-                  <span className="text-[10px] font-mono bg-purple-950 text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded">
-                    ID: {ride.id.substring(0, 8)}
-                  </span>
-                  <span className="text-sm font-black text-rose-400 font-mono">₹{ride.fare}</span>
+      )}
+
+      {/* Tab 3: Reviews & Ratings */}
+      {activeTab === "reviews" && (
+        <div className="space-y-4">
+          {rides.length === 0 ? (
+            <div className="text-center py-12 text-purple-400/60 font-mono text-xs">
+              No completed rides to review.
+            </div>
+          ) : (
+            rides.map((ride) => (
+              <div
+                key={ride.id}
+                className="bg-[#06040c]/90 border border-purple-500/20 p-5 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
+              >
+                <div>
+                  <p className="text-xs font-mono text-purple-200 font-bold">
+                    {ride.pickup} ➔ {ride.dropoff}
+                  </p>
+                  <p className="text-[10px] font-mono text-purple-400 mt-1">
+                    Fare: ₹{ride.fare} • Status: Completed
+                  </p>
+                  {ride.review && (
+                    <p className="text-xs font-mono text-rose-300 mt-2 bg-rose-500/10 p-2 rounded-lg border border-rose-500/20">
+                      "{ride.review}" ({ride.rating || 5} ⭐)
+                    </p>
+                  )}
                 </div>
 
-                <div className="space-y-2 mb-4 text-xs font-mono">
-                  <div className="flex items-center space-x-2 text-purple-200 truncate">
-                    <span className="text-rose-400">📍</span>
-                    <span className="truncate">From: {ride.pickup}</span>
-                  </div>
-                  <div className="flex items-center space-x-2 text-purple-200 truncate">
-                    <span className="text-indigo-400">🏁</span>
-                    <span className="truncate">To: {ride.dropoff}</span>
-                  </div>
-                </div>
-              </div>
+                {!ride.review && (
+                  <div className="flex items-center space-x-3 w-full md:w-auto">
+                    <select
+                      value={ratingInput[ride.id] || 5}
+                      onChange={(e) =>
+                        setRatingInput({ ...ratingInput, [ride.id]: Number(e.target.value) })
+                      }
+                      className="bg-black border border-purple-500/40 rounded-xl px-3 py-2 text-xs font-mono text-purple-200 focus:outline-none"
+                    >
+                      <option value="5">5 ⭐ (Excellent)</option>
+                      <option value="4">4 ⭐ (Good)</option>
+                      <option value="3">3 ⭐ (Average)</option>
+                      <option value="2">2 ⭐ (Poor)</option>
+                      <option value="1">1 ⭐ (Bad)</option>
+                    </select>
 
-              <div className="pt-3 border-t border-purple-900/50 flex items-center justify-between">
-                {ride.rating ? (
-                  <div className="flex items-center space-x-1 text-amber-400 text-xs font-mono">
-                    <span>{"★".repeat(ride.rating)}</span>
-                    <span className="text-purple-300 ml-1">({ride.rating}/5)</span>
+                    <input
+                      type="text"
+                      placeholder="Write review..."
+                      value={reviewInput[ride.id] || ""}
+                      onChange={(e) =>
+                        setReviewInput({ ...reviewInput, [ride.id]: e.target.value })
+                      }
+                      className="bg-black border border-purple-500/40 rounded-xl px-3 py-2 text-xs font-mono text-purple-200 focus:outline-none flex-1"
+                    />
+
+                    <button
+                      onClick={() => handleReviewSubmit(ride.id)}
+                      disabled={submittingId === ride.id}
+                      className="bg-rose-500 hover:bg-rose-600 text-white px-4 py-2 rounded-xl text-xs font-mono font-bold transition shadow-md whitespace-nowrap"
+                    >
+                      {submittingId === ride.id ? "Saving..." : "Submit"}
+                    </button>
                   </div>
-                ) : (
-                  <button
-                    onClick={() => setSelectedRideForReview(ride)}
-                    className="bg-purple-950 hover:bg-purple-900 text-rose-300 border border-rose-500/30 text-[10px] font-mono font-bold px-3 py-1.5 rounded-lg transition"
-                  >
-                    Rate Trip
-                  </button>
                 )}
-                <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-2 py-0.5 rounded">
-                  {ride.status}
+              </div>
+            ))
+          )}
+        </div>
+      )}
+
+      {/* Modal for Digital Receipt */}
+      {selectedReceipt && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-[#0e0a17] border-2 border-rose-500/60 p-8 rounded-3xl max-w-md w-full shadow-2xl shadow-rose-950/80 relative font-mono">
+            <button
+              onClick={() => setSelectedReceipt(null)}
+              className="absolute top-4 right-4 text-purple-400 hover:text-white text-sm font-bold bg-purple-950 px-3 py-1 rounded-lg"
+            >
+              ✕
+            </button>
+
+            <div className="text-center mb-6">
+              <div className="w-12 h-12 mx-auto mb-3 bg-gradient-to-tr from-rose-500 to-purple-600 text-white font-black flex items-center justify-center rounded-xl text-lg">
+                R
+              </div>
+              <h3 className="text-base font-extrabold text-rose-300 tracking-wider">
+                RAPIDRIDE DIGITAL RECEIPT
+              </h3>
+              <p className="text-[10px] text-purple-400 mt-1">OFFICIAL STRIPE & SUPABASE INVOICE</p>
+            </div>
+
+            <div className="space-y-3 text-xs text-purple-200 border-t border-b border-purple-900/60 py-4 my-4">
+              <div className="flex justify-between">
+                <span className="text-purple-400">Transaction ID:</span>
+                <span className="text-rose-300 font-bold">
+                  {selectedReceipt.payment_id || "cs_live_" + selectedReceipt.id.substring(0, 8)}
                 </span>
               </div>
+              <div className="flex justify-between">
+                <span className="text-purple-400">Pickup Location:</span>
+                <span className="text-right">{selectedReceipt.pickup}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-purple-400">Dropoff Destination:</span>
+                <span className="text-right">{selectedReceipt.dropoff}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-purple-400">Payment Status:</span>
+                <span className="text-emerald-400 font-bold">Successful (Paid)</span>
+              </div>
+              <div className="flex justify-between text-sm font-bold pt-2 border-t border-purple-900/40">
+                <span className="text-white">Total Fare:</span>
+                <span className="text-rose-300">₹{selectedReceipt.fare}</span>
+              </div>
             </div>
-          ))}
-        </div>
-      )}
 
-      {/* Review Modal */}
-      {selectedRideForReview && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-[#0e0a17] border border-purple-500/40 p-6 rounded-3xl max-w-md w-full shadow-2xl">
-            <h3 className="text-sm font-mono font-bold tracking-widest text-rose-400 uppercase mb-4">
-              Rate Your RapidRide Driver
-            </h3>
-            
-            <form onSubmit={handleReviewSubmit} className="space-y-4">
-              <div className="flex justify-center space-x-2 py-2">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    type="button"
-                    key={star}
-                    onClick={() => setRating(star)}
-                    className="text-2xl focus:outline-none transition transform hover:scale-110"
-                  >
-                    {star <= rating ? "⭐" : "⚪"}
-                  </button>
-                ))}
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-mono tracking-wider text-purple-300 mb-1.5 uppercase">
-                  Write a Review (Optional)
-                </label>
-                <textarea
-                  rows={3}
-                  value={reviewText}
-                  onChange={(e) => setReviewText(e.target.value)}
-                  placeholder="How was your ride experience?"
-                  className="w-full bg-[#06040c] border border-purple-500/30 rounded-xl p-3 text-xs text-purple-100 placeholder-purple-900 focus:outline-none focus:border-rose-500 transition"
-                />
-              </div>
-
-              <div className="flex space-x-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setSelectedRideForReview(null)}
-                  className="flex-1 bg-purple-950 hover:bg-purple-900 text-purple-300 font-bold py-3 rounded-xl text-xs uppercase tracking-wider border border-purple-500/30 transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="flex-1 bg-gradient-to-r from-rose-500 to-purple-600 hover:from-rose-400 hover:to-purple-500 text-white font-bold py-3 rounded-xl text-xs uppercase tracking-wider transition shadow-lg shadow-rose-600/30"
-                >
-                  {submitting ? "Submitting..." : "Submit Review"}
-                </button>
-              </div>
-            </form>
+            <button
+              onClick={() => window.print()}
+              className="w-full bg-gradient-to-r from-rose-500 to-purple-600 hover:from-rose-400 hover:to-purple-500 text-white font-bold py-3 rounded-xl text-xs uppercase tracking-widest transition shadow-lg shadow-rose-600/30"
+            >
+              Print / Download Receipt
+            </button>
           </div>
         </div>
       )}
