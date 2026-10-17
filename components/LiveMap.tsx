@@ -10,7 +10,6 @@ interface LiveMapProps {
   dropoff?: string;
 }
 
-// Component to handle dynamic routing from OSRM GeoJSON API
 function RouteUpdater({ pickup, dropoff }: { pickup?: string; dropoff?: string }) {
   const map = useMap();
   const [routeInfo, setRouteInfo] = useState<{ distance: string; duration: string } | null>(null);
@@ -18,52 +17,47 @@ function RouteUpdater({ pickup, dropoff }: { pickup?: string; dropoff?: string }
   useEffect(() => {
     if (!pickup || !dropoff) return;
 
-    // Accurate coordinates (Longitude, Latitude format for OSRM) around Chhatrapati Sambhajinagar
-    const coordsMap: Record<string, [number, number]> = {
-      "railway station": [75.3211, 19.8456],
-      "cidco": [75.3512, 19.8690],
-      "kat kat gate": [75.3433, 19.8876],
-      "roshan gate": [75.3275, 19.8783],
-      "kranti chowk": [75.3361, 19.8762],
-      "harsul": [75.3620, 19.9100],
-      "prozone mall": [75.3580, 19.8750],
-      "bus stand": [75.3310, 19.8710],
-    };
-
-    const pKey = pickup.toLowerCase().trim();
-    const dKey = dropoff.toLowerCase().trim();
-
-    // Defaults if location not explicitly mapped
-    const startCoord = coordsMap[pKey] || [75.3211, 19.8456]; // Railway Station
-    const endCoord = coordsMap[dKey] || [75.3512, 19.8690];   // CIDCO
-
     let outlinePolyline: L.Polyline | null = null;
     let mainPolyline: L.Polyline | null = null;
 
-    const fetchRealRoadRoute = async () => {
+    const fetchCoordinatesAndRoute = async () => {
       try {
-        // Requesting GeoJSON format so we get direct [lat, lng] arrays without needing external decoders
-        const res = await fetch(
+        // Helper function to get coordinates for any location name using Nominatim API dynamically
+        const getCoords = async (loc: string) => {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(loc + ", Chhatrapati Sambhajinagar")}`
+          );
+          const data = await res.json();
+          if (data && data.length > 0) {
+            return [parseFloat(data[0].lon), parseFloat(data[0].lat)] as [number, number];
+          }
+          // Fallback coordinates (Kranti Chowk) if location is not found
+          return [75.3361, 19.8762] as [number, number];
+        };
+
+        const startCoord = await getCoords(pickup);
+        const endCoord = await getCoords(dropoff);
+
+        // Fetch real road route from OSRM using dynamic coordinates
+        const routeRes = await fetch(
           `https://router.project-osrm.org/route/v1/driving/${startCoord[0]},${startCoord[1]};${endCoord[0]},${endCoord[1]}?overview=full&geometries=geojson`
         );
-        const data = await res.json();
+        const routeData = await routeRes.json();
 
-        if (data.routes && data.routes.length > 0) {
-          const route = data.routes[0];
-          // OSRM GeoJSON returns coordinates as [longitude, latitude], Leaflet needs [latitude, longitude]
+        if (routeData.routes && routeData.routes.length > 0) {
+          const route = routeData.routes[0];
           const latLngPoints: [number, number][] = route.geometry.coordinates.map(
             (coord: [number, number]) => [coord[1], coord[0]]
           );
 
-          // Draw Google Maps style double-stroke highlighted road path
           outlinePolyline = L.polyline(latLngPoints, {
-            color: "#ffffff", // White outer glow
+            color: "#ffffff",
             weight: 9,
             opacity: 0.9,
           }).addTo(map);
 
           mainPolyline = L.polyline(latLngPoints, {
-            color: "#f43f5e", // Rose-500 main road line
+            color: "#f43f5e",
             weight: 5,
             opacity: 1.0,
           }).addTo(map);
@@ -80,11 +74,11 @@ function RouteUpdater({ pickup, dropoff }: { pickup?: string; dropoff?: string }
           });
         }
       } catch (err) {
-        console.error("Routing error:", err);
+        console.error("Geocoding or Routing error:", err);
       }
     };
 
-    fetchRealRoadRoute();
+    fetchCoordinatesAndRoute();
 
     return () => {
       if (outlinePolyline) map.removeLayer(outlinePolyline);
@@ -112,7 +106,7 @@ function RouteUpdater({ pickup, dropoff }: { pickup?: string; dropoff?: string }
 }
 
 export default function LiveMap({ pickup, dropoff }: LiveMapProps) {
-  const center: [number, number] = [19.8762, 75.3361]; // Chhatrapati Sambhajinagar center
+  const center: [number, number] = [19.8762, 75.3361];
 
   const customIcon = L.divIcon({
     className: "custom-map-marker",
