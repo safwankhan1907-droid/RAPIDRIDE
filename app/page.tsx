@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { UserButton, SignInButton, useUser } from "@clerk/nextjs";
+import { UserButton, SignInButton, SignUpButton, useUser } from "@clerk/nextjs";
 import dynamic from "next/dynamic";
 import RideHistory from "../components/RideHistory";
 import { supabase } from "@/utils/supabase/client";
@@ -9,7 +9,7 @@ import { supabase } from "@/utils/supabase/client";
 const MapComponent = dynamic(() => import("../components/LiveMap"), { ssr: false });
 
 export default function Home() {
-  const { user, isSignedIn } = useUser();
+  const { user, isSignedIn, isLoaded } = useUser();
   const [pickup, setPickup] = useState("");
   const [dropoff, setDropoff] = useState("");
   const [loading, setLoading] = useState(false);
@@ -51,7 +51,7 @@ export default function Home() {
       osc.start(now);
       osc.stop(now + 0.3);
     } catch (e) {
-      // Ignore if browser blocks audio
+      // Ignore audio block
     }
   };
 
@@ -132,7 +132,7 @@ export default function Home() {
   const handleBooking = async () => {
     playSound("click");
     if (!pickup || !dropoff) {
-      setError("Please enter both pickup and dropoff locations");
+      setError("Please enter both locations");
       setToast({ message: "Please fill in both pickup and dropoff locations!", type: "error" });
       return;
     }
@@ -165,10 +165,66 @@ export default function Home() {
     }
   };
 
+  // Loading state jab tak Clerk session check kar raha hai
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen bg-[#06040c] flex items-center justify-center text-purple-300 font-mono text-sm">
+        Loading RapidRide...
+      </div>
+    );
+  }
+
+  // AGAR USER SIGNED IN NAHI HAI, TOH YE SIGN UP / SIGN IN LANDING PAGE DIKHAO
+  if (!isSignedIn) {
+    return (
+      <main className="min-h-screen text-purple-100 flex flex-col items-center justify-center p-6 relative overflow-hidden">
+        {/* Background Layer */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src="/rapidride-hero-bg.png"
+            alt="RapidRide Background"
+            className="w-full h-full object-cover filter brightness-50"
+          />
+          <div className="absolute inset-0 bg-[#06040c]/70 backdrop-blur-sm" />
+        </div>
+
+        <div className="relative z-10 max-w-md w-full bg-[#0e0a17]/90 border border-purple-500/40 p-8 rounded-3xl shadow-2xl shadow-purple-950/80 text-center backdrop-blur-xl">
+          <div className="w-16 h-16 mx-auto mb-6 bg-gradient-to-tr from-rose-500 via-purple-600 to-indigo-600 text-white font-black flex items-center justify-center rounded-2xl shadow-lg shadow-rose-500/40 text-2xl tracking-wider">
+            R
+          </div>
+          <h1 className="text-2xl font-extrabold tracking-wider bg-gradient-to-r from-rose-300 via-purple-300 to-indigo-300 bg-clip-text text-transparent mb-2">
+            RAPIDRIDE
+          </h1>
+          <p className="text-xs font-mono text-purple-300/80 mb-8 uppercase tracking-widest">
+            Anime-Themed Secure Cab Booking
+          </p>
+
+          <div className="space-y-4">
+            <SignInButton mode="modal">
+              <button className="w-full bg-gradient-to-r from-rose-500 to-purple-600 hover:from-rose-400 hover:to-purple-500 text-white font-bold py-3.5 rounded-xl text-xs uppercase tracking-widest transition-all shadow-lg shadow-rose-600/30">
+                Sign In to Account
+              </button>
+            </SignInButton>
+
+            <SignUpButton mode="modal">
+              <button className="w-full bg-purple-950/80 hover:bg-purple-900 text-purple-200 font-bold py-3.5 rounded-xl text-xs uppercase tracking-widest transition border border-purple-500/30 shadow-lg">
+                Create New Account (Sign Up)
+              </button>
+            </SignUpButton>
+          </div>
+
+          <div className="mt-8 pt-6 border-t border-purple-900/50 text-[10px] font-mono text-purple-400">
+            SECURE CLERK AUTH • STRIPE PAYMENTS • SUPABASE SYNC
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  // AGAR USER SIGNED IN HAI, TOH FULL DASHBOARD DIKHAO
   return (
     <main className="min-h-screen text-purple-100 p-6 md:p-10 selection:bg-rose-500 selection:text-white relative overflow-hidden">
-      
-      {/* Prominent Top-Center Floating Toast Banner */}
+      {/* Toast Banner */}
       {toast && (
         <div className="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 flex items-center space-x-3 bg-[#160d26] border-2 border-rose-500 px-6 py-3.5 rounded-2xl shadow-2xl shadow-rose-950/80 animate-bounce">
           <span className="text-xl">
@@ -217,17 +273,9 @@ export default function Home() {
             </span>
           </div>
 
-          {isSignedIn ? (
-            <div className="border border-purple-500/50 rounded-full p-1 bg-purple-950/60 shadow-inner backdrop-blur-md">
-              <UserButton />
-            </div>
-          ) : (
-            <SignInButton mode="modal">
-              <button className="bg-gradient-to-r from-rose-500 to-purple-600 hover:from-rose-400 hover:to-purple-500 text-white px-5 py-2 rounded-xl text-xs font-bold tracking-widest uppercase transition-all shadow-lg shadow-rose-600/30 hover:scale-[1.02] active:scale-[0.98]">
-                Sign In
-              </button>
-            </SignInButton>
-          )}
+          <div className="border border-purple-500/50 rounded-full p-1 bg-purple-950/60 shadow-inner backdrop-blur-md">
+            <UserButton />
+          </div>
         </div>
       </header>
 
@@ -275,31 +323,18 @@ export default function Home() {
           </div>
 
           <div className="mt-8 pt-4 border-t border-purple-900/50">
-            {isSignedIn ? (
-              <button
-                onClick={handleBooking}
-                disabled={loading}
-                className="w-full bg-gradient-to-r from-rose-500 via-purple-600 to-indigo-600 hover:from-rose-400 hover:to-purple-500 text-white font-black py-4 rounded-2xl transition-all shadow-xl shadow-rose-600/30 flex items-center justify-center space-x-2 active:scale-[0.99] disabled:opacity-60"
-              >
-                <span className="tracking-widest uppercase text-sm">
-                  {loading ? "Processing..." : "Pay with Stripe"}
-                </span>
-                <span className="bg-black/20 px-2.5 py-0.5 rounded-lg text-xs font-mono font-bold text-rose-200">
-                  {pickup && dropoff ? `₹${dynamicFare}` : "Enter Locations"}
-                </span>
-              </button>
-            ) : (
-              <div className="text-center">
-                <p className="text-xs text-rose-300 mb-3 bg-rose-950/70 border border-rose-500/30 py-2.5 rounded-xl font-medium backdrop-blur-sm">
-                  ⚠️ Unauthorized. Please login to book a ride.
-                </p>
-                <SignInButton mode="modal">
-                  <button className="w-full bg-purple-950/80 hover:bg-purple-900 text-rose-300 font-bold py-3.5 rounded-2xl text-xs uppercase tracking-widest transition border border-rose-500/30 shadow-lg backdrop-blur-sm">
-                    Login to Book Ride
-                  </button>
-                </SignInButton>
-              </div>
-            )}
+            <button
+              onClick={handleBooking}
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-rose-500 via-purple-600 to-indigo-600 hover:from-rose-400 hover:to-purple-500 text-white font-black py-4 rounded-2xl transition-all shadow-xl shadow-rose-600/30 flex items-center justify-center space-x-2 active:scale-[0.99] disabled:opacity-60"
+            >
+              <span className="tracking-widest uppercase text-sm">
+                {loading ? "Processing..." : "Pay with Stripe"}
+              </span>
+              <span className="bg-black/20 px-2.5 py-0.5 rounded-lg text-xs font-mono font-bold text-rose-200">
+                {pickup && dropoff ? `₹${dynamicFare}` : "Enter Locations"}
+              </span>
+            </button>
 
             {error && <p className="text-xs text-rose-400 mt-3 text-center">{error}</p>}
           </div>
