@@ -174,4 +174,77 @@ export default function Home() {
 
           <div className="space-y-4">
             <SignInButton mode="modal">
-              <button className="w-full bg-gradient-to-r from-rose-500 to-purple-600 hover:from-rose-400 hover:to-purple-50
+              <button className="w-full bg-gradient-to-r from-rose-500 to-purple-600 hover:from-rose-400 hover:to-purple-500 text-white font-bold py-3.5 rounded-xl text-xs uppercase tracking-widest transition-all shadow-lg shadow-rose-600/30">
+                Sign In to Account
+              </button>
+            </SignInButton>
+
+            <SignUpButton mode="modal">
+              <button className="w-full bg-purple-950/80 hover:bg-purple-900 text-purple-200 font-bold py-3.5 rounded-xl text-xs uppercase tracking-widest transition border border-purple-500/30 shadow-lg">
+                Create New Account (Sign Up)
+              </button>
+            </SignUpButton>
+          </div>
+
+          <div className="mt-8 pt-6 border-t border-purple-900/50 text-[10px] font-mono text-purple-400">
+            SECURE CLERK AUTH • STRIPE PAYMENTS • SUPABASE SYNC
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  // Full Dashboard for Signed In User
+  return (
+    <main className="min-h-screen text-purple-100 p-6 md:p-10 selection:bg-rose-500 selection:text-white relative overflow-hidden">
+      {/* Toast Banner */}
+      {toast && (
+        <div className="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 flex items-center space-x-3 bg-[#160d26] border-2 border-rose-500 px-6 py-3.5 rounded-2xl shadow-2xl shadow-rose-950/80 animate-bounce">
+          <span className="text-xl">
+            {toast.type === "success" && "✅"}
+            {toast.type === "error" && "❌"}
+            {toast.type === "info" && "ℹ️"}
+          </span>
+          <p className="text-xs md:text-sm font-mono font-bold text-rose-200 tracking-wider">
+            {toast.message}
+          </p>
+          <button
+            onClick={() => setToast(null)}
+            className="ml-4 bg-rose-500/20 hover:bg-rose-500 text-rose-300 hover:text-white px-2.5 py-1 rounded-lg text-xs font-bold transition"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
+      {/* Background Image Layer */}
+      <div className="absolute inset-0 z-0">
+        <img
+          src="/rapidride-hero-bg.png"
+          alt="RapidRide Anime Background"
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-[#06040c]/40" />
+      </div>
+
+      {/* Header */}
+      <header className="relative z-10 flex items-center justify-between border-b border-purple-900/40 pb-5 mb-8 backdrop-blur-md px-4 rounded-2xl bg-black/30 max-w-7xl mx-auto">
+        <div className="flex items-center space-x-3">
+          <div className="bg-gradient-to-tr from-rose-500 via-purple-600 to-indigo-600 text-white font-black px-3.5 py-1.5 rounded-xl shadow-lg shadow-rose-500/30 text-lg tracking-wider">
+            R
+          </div>
+          <span className="text-xl font-extrabold tracking-widest bg-gradient-to-r from-rose-300 via-purple-300 to-indigo-300 bg-clip-text text-transparent">
+            RAPIDRIDE
+          </span>
+        </div>
+
+        <div className="flex items-center space-x-4">
+          <Link
+            href="/dashboard"
+            className="hidden sm:flex items-center space-x-2 bg-purple-950/60 hover:bg-purple-900 border border-rose-500/30 px-4 py-2 rounded-xl text-xs text-rose-300 font-mono tracking-wider font-semibold transition backdrop-blur-md shadow-lg"
+          >
+            📊 Dashboard & Receipts
+          </Link>
+
+          <div className="hidden sm:flex items-center space-x-2 bg-purple-950/60 border border-rose-500/30 px-3.5 py-1.5 rounded-full backdrop-blur-md">
+            <span className="w-2 h-2 rounded-full bg-rose-40
