@@ -164,4 +164,57 @@ export default function Home() {
           <h1 className="text-2xl font-extrabold tracking-wider bg-gradient-to-r from-rose-300 via-purple-300 to-indigo-300 bg-clip-text text-transparent mb-2">
             RAPIDRIDE
           </h1>
-          <p className="text-xs font-mono text-purple-300/80 mb-8 uppercase tracking-wid
+          <p className="text-xs font-mono text-purple-300/80 mb-8 uppercase tracking-widest">
+            Anime-Themed Secure Cab Booking
+          </p>
+
+          <div className="space-y-4">
+            <SignInButton mode="modal">
+              <button className="w-full bg-gradient-to-r from-rose-500 to-purple-600 hover:from-rose-400 hover:to-purple-500 text-white font-bold py-3.5 rounded-xl text-xs uppercase tracking-widest transition-all shadow-lg shadow-rose-600/30">
+                Sign In to Account
+              </button>
+            </SignInButton>
+
+            <SignUpButton mode="modal">
+              <button className="w-full bg-purple-950/80 hover:bg-purple-900 text-purple-200 font-bold py-3.5 rounded-xl text-xs uppercase tracking-widest transition border border-purple-500/30 shadow-lg">
+                Create New Account (Sign Up)
+              </button>
+            </SignUpButton>
+          </div>
+
+          <div className="mt-8 pt-6 border-t border-purple-900/50 text-[10px] font-mono text-purple-400">
+            SECURE CLERK AUTH • STRIPE PAYMENTS • SUPABASE SYNC
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <main className="min-h-screen text-purple-100 p-6 md:p-10 selection:bg-rose-500 selection:text-white relative overflow-hidden">
+      {toast && (
+        <div className="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 flex items-center space-x-3 bg-[#160d26] border-2 border-rose-500 px-6 py-3.5 rounded-2xl shadow-2xl shadow-rose-950/80 animate-bounce">
+          <span className="text-xl">
+            {toast.type === "success" && "✅"}
+            {toast.type === "error" && "❌"}
+            {toast.type === "info" && "ℹ️"}
+          </span>
+          <p className="text-xs md:text-sm font-mono font-bold text-rose-200 tracking-wider">
+            {toast.message}
+          </p>
+          <button
+            onClick={() => setToast(null)}
+            className="ml-4 bg-rose-500/20 hover:bg-rose-500 text-rose-300 hover:text-white px-2.5 py-1 rounded-lg text-xs font-bold transition"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
+      <div className="absolute inset-0 z-0">
+        <img
+          src="/rapidride-hero-bg.png"
+          alt="RapidRide Anime Background"
+          className="w-full h-full object-cover"
+        />
+        <div className
