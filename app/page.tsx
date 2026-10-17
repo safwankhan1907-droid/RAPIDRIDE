@@ -19,7 +19,6 @@ export default function Home() {
     type: "success" | "error" | "info";
   } | null>(null);
 
-  // Safe Web Audio Bleep Generator
   const playSound = (type: "success" | "click" | "booking") => {
     try {
       const windowAudio = window as any;
@@ -49,9 +48,7 @@ export default function Home() {
       }
       osc.start(now);
       osc.stop(now + 0.3);
-    } catch (e) {
-      // Ignore audio block
-    }
+    } catch (e) {}
   };
 
   const calculateDynamicFare = (p: string, d: string) => {
@@ -148,7 +145,6 @@ export default function Home() {
     );
   }
 
-  // Gatekeeper: Agar user signed in nahi hai, toh Landing/Auth screen dikhao
   if (!isSignedIn) {
     return (
       <main className="min-h-screen text-purple-100 flex flex-col items-center justify-center p-6 relative overflow-hidden">
@@ -194,10 +190,8 @@ export default function Home() {
     );
   }
 
-  // Full Dashboard for Signed In User
   return (
     <main className="min-h-screen text-purple-100 p-6 md:p-10 selection:bg-rose-500 selection:text-white relative overflow-hidden">
-      {/* Toast Banner */}
       {toast && (
         <div className="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 flex items-center space-x-3 bg-[#160d26] border-2 border-rose-500 px-6 py-3.5 rounded-2xl shadow-2xl shadow-rose-950/80 animate-bounce">
           <span className="text-xl">
@@ -217,7 +211,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* Background Image Layer */}
       <div className="absolute inset-0 z-0">
         <img
           src="/rapidride-hero-bg.png"
@@ -227,7 +220,6 @@ export default function Home() {
         <div className="absolute inset-0 bg-[#06040c]/40" />
       </div>
 
-      {/* Header */}
       <header className="relative z-10 flex items-center justify-between border-b border-purple-900/40 pb-5 mb-8 backdrop-blur-md px-4 rounded-2xl bg-black/30 max-w-7xl mx-auto">
         <div className="flex items-center space-x-3">
           <div className="bg-gradient-to-tr from-rose-500 via-purple-600 to-indigo-600 text-white font-black px-3.5 py-1.5 rounded-xl shadow-lg shadow-rose-500/30 text-lg tracking-wider">
@@ -247,4 +239,89 @@ export default function Home() {
           </Link>
 
           <div className="hidden sm:flex items-center space-x-2 bg-purple-950/60 border border-rose-500/30 px-3.5 py-1.5 rounded-full backdrop-blur-md">
-            <span className="w-2 h-2 rounded-full bg-rose-40
+            <span className="w-2 h-2 rounded-full bg-rose-400 animate-pulse" />
+            <span className="text-xs text-rose-300 font-mono tracking-wider font-semibold">
+              RATE: ₹19/KM
+            </span>
+          </div>
+
+          <div className="border border-purple-500/50 rounded-full p-1 bg-purple-950/60 shadow-inner backdrop-blur-md">
+            <UserButton />
+          </div>
+        </div>
+      </header>
+
+      <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-7xl mx-auto mb-10">
+        <div className="bg-[#0e0a17]/70 backdrop-blur-md border border-purple-500/30 p-7 rounded-3xl shadow-2xl shadow-purple-950/50 flex flex-col justify-between">
+          <div>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xs font-mono font-bold tracking-widest text-rose-400 uppercase">
+                Book Your Ride
+              </h2>
+              <span className="text-[10px] font-mono tracking-wider bg-rose-500/10 text-rose-300 border border-rose-500/30 px-3 py-1 rounded-md">
+                SECURE STRIPE PAY
+              </span>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[11px] font-mono tracking-wider text-purple-300/80 mb-1.5 uppercase">
+                  Pickup Location
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g., Railway Station..."
+                  value={pickup}
+                  onChange={(e) => setPickup(e.target.value)}
+                  className="w-full bg-[#06040c]/80 border border-purple-500/30 rounded-xl px-4 py-3 text-sm text-purple-100 placeholder-purple-900 focus:outline-none focus:border-rose-500 transition shadow-inner backdrop-blur-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-mono tracking-wider text-purple-300/80 mb-1.5 uppercase">
+                  Dropoff Destination
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g., CIDCO..."
+                  value={dropoff}
+                  onChange={(e) => setDropoff(e.target.value)}
+                  className="w-full bg-[#06040c]/80 border border-purple-500/30 rounded-xl px-4 py-3 text-sm text-purple-100 placeholder-purple-900 focus:outline-none focus:border-rose-500 transition shadow-inner backdrop-blur-sm"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-8 pt-4 border-t border-purple-900/50">
+            <button
+              onClick={handleBooking}
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-rose-500 via-purple-600 to-indigo-600 hover:from-rose-400 hover:to-purple-500 text-white font-black py-4 rounded-2xl transition-all shadow-xl shadow-rose-600/30 flex items-center justify-center space-x-2 active:scale-[0.99] disabled:opacity-60"
+            >
+              <span className="tracking-widest uppercase text-sm">
+                {loading ? "Processing..." : "Pay with Stripe"}
+              </span>
+              <span className="bg-black/20 px-2.5 py-0.5 rounded-lg text-xs font-mono font-bold text-rose-200">
+                {pickup && dropoff ? `₹${dynamicFare}` : "Enter Locations"}
+              </span>
+            </button>
+
+            {error && <p className="text-xs text-rose-400 mt-3 text-center">{error}</p>}
+          </div>
+        </div>
+
+        <div className="bg-[#0e0a17]/70 backdrop-blur-md border border-purple-500/30 p-7 rounded-3xl shadow-2xl shadow-purple-950/50 flex flex-col">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xs font-mono font-bold tracking-widest text-rose-400 uppercase">
+              Live Fleet Radar
+            </h2>
+            <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
+          </div>
+          <div className="flex-1 min-h-[320px] rounded-2xl overflow-hidden border border-purple-500/30 relative shadow-inner backdrop-blur-sm">
+            <MapComponent pickup={pickup} dropoff={dropoff} />
+          </div>
+        </div>
+      </div>
+    </main>
+  );
+}
