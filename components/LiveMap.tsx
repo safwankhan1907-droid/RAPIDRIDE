@@ -20,32 +20,52 @@ function RouteUpdater({ pickup, dropoff }: { pickup?: string; dropoff?: string }
     let outlinePolyline: L.Polyline | null = null;
     let mainPolyline: L.Polyline | null = null;
 
-    const fetchCoordinatesAndRoute = async () => {
+    // Comprehensive coordinate dictionary for Chhatrapati Sambhajinagar (Lng, Lat format for OSRM)
+    const locationsMap: Record<string, [number, number]> = {
+      "railway station": [75.3211, 19.8456],
+      "cidco": [75.3512, 19.8690],
+      "kat kat gate": [75.3433, 19.8876],
+      "roshan gate": [75.3275, 19.8783],
+      "kranti chowk": [75.3361, 19.8762],
+      "harsul": [75.3620, 19.9100],
+      "prozone mall": [75.3580, 19.8750],
+      "bus stand": [75.3310, 19.8710],
+      "jaisinghpura": [75.3150, 19.8900],
+      "osmanpura": [75.3290, 19.8680],
+      "shahgunj": [75.3230, 19.8810],
+      "aurangpura": [75.3280, 19.8850],
+      "nirala bazar": [75.3330, 19.8790],
+      "padegaon": [75.3050, 19.9200],
+    };
+
+    const pKey = pickup.toLowerCase().trim();
+    const dKey = dropoff.toLowerCase().trim();
+
+    // Smart fallback if location name is slightly different
+    const getCoords = (name: string): [number, number] => {
+      if (locationsMap[name]) return locationsMap[name];
+      // Search partial match
+      for (const key of Object.keys(locationsMap)) {
+        if (name.includes(key) || key.includes(name)) {
+          return locationsMap[key];
+        }
+      }
+      // Default center (Kranti Chowk)
+      return [75.3361, 19.8762];
+    };
+
+    const startCoord = getCoords(pKey);
+    const endCoord = getCoords(dKey);
+
+    const fetchRoute = async () => {
       try {
-        // Helper function to get coordinates for any location name using Nominatim API dynamically
-        const getCoords = async (loc: string) => {
-          const res = await fetch(
-            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(loc + ", Chhatrapati Sambhajinagar")}`
-          );
-          const data = await res.json();
-          if (data && data.length > 0) {
-            return [parseFloat(data[0].lon), parseFloat(data[0].lat)] as [number, number];
-          }
-          // Fallback coordinates (Kranti Chowk) if location is not found
-          return [75.3361, 19.8762] as [number, number];
-        };
-
-        const startCoord = await getCoords(pickup);
-        const endCoord = await getCoords(dropoff);
-
-        // Fetch real road route from OSRM using dynamic coordinates
-        const routeRes = await fetch(
+        const res = await fetch(
           `https://router.project-osrm.org/route/v1/driving/${startCoord[0]},${startCoord[1]};${endCoord[0]},${endCoord[1]}?overview=full&geometries=geojson`
         );
-        const routeData = await routeRes.json();
+        const data = await res.json();
 
-        if (routeData.routes && routeData.routes.length > 0) {
-          const route = routeData.routes[0];
+        if (data.routes && data.routes.length > 0) {
+          const route = data.routes[0];
           const latLngPoints: [number, number][] = route.geometry.coordinates.map(
             (coord: [number, number]) => [coord[1], coord[0]]
           );
@@ -74,11 +94,11 @@ function RouteUpdater({ pickup, dropoff }: { pickup?: string; dropoff?: string }
           });
         }
       } catch (err) {
-        console.error("Geocoding or Routing error:", err);
+        console.error("Routing error:", err);
       }
     };
 
-    fetchCoordinatesAndRoute();
+    fetchRoute();
 
     return () => {
       if (outlinePolyline) map.removeLayer(outlinePolyline);
