@@ -24,7 +24,7 @@ interface LiveMapProps {
 }
 
 // Component to handle dynamic route bounding and drawing
-function RouteUpdater({ pickup, dropoff }: { pickup: string; dropoff: string }) {
+function RouteUpdater({ pickup, dropoff }: { pickup?: string; dropoff?: string }) {
   const map = useMap();
   const [routeInfo, setRouteInfo] = useState<{ distance: string; duration: string } | null>(null);
 
@@ -32,7 +32,6 @@ function RouteUpdater({ pickup, dropoff }: { pickup: string; dropoff: string }) 
     if (!pickup || !dropoff) return;
 
     // Simulated coordinate mapping for demo locations around Chhatrapati Sambhajinagar
-    // In production, this can use Nominatim Geocoding API
     const coordsMap: Record<string, [number, number]> = {
       "kat kat gate": [19.8876, 75.3433],
       "roshan gate": [19.8783, 75.3275],
